@@ -57,12 +57,24 @@ batch_sz = np.round(dataClst.shape[0]*s_size).astype(int)
 # do the clusting
 nCl = range(1, 20)
 inertias=[]
-
+'''
 mBkMeans = [MiniBatchKMeans(n_clusters=i,init='random',max_iter=20,
                            batch_size=batch_sz,verbose=False,
                            compute_labels=True,random_state=42)for i in nCl]
 
 clScores = [mBkMeans[i].fit(dataClst).score(dataClst) for i in range(len(mBkMeans))]
+'''
+for i in tqdm(nCl):
+    #print('MiniBatchKMeans with clusters = ',i)
+    mBkMeans = MiniBatchKMeans(n_clusters=i,init='random',max_iter=20,
+                           batch_size=batch_sz,verbose=False,
+                           compute_labels=True,random_state=42)
+    
+    mBkMeans.fit(dataClst)
+    #clScores = mBkMeans[i].fit(dataClst).score(dataClst)
+    inertias.append(mBkMeans.inertia_)
+    
+    
 
 # plot the resutls
 plt.plot(nCl,clScores)
