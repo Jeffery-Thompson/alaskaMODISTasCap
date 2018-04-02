@@ -74,14 +74,8 @@ tcGreenFlat = tassCap[1,rTC,cTC]
 tcWetFlat = tassCap[2,rTC,cTC]
 
 fineFile = 'AK_PZI.tif'
-with rasterio.open(iDir2 +  fineFile, 'r', driver='GTiff', nodatavals = -9999.) as src:
-    fIn = src.read()
-    fMask = src.read_masks(1)
-    pzi = fIn.squeeze()
-    rP,cP = np.where(src.read_masks(1) )
-    #rT,cT = np.where(src.read_masks(1) > -9999)
-    fTra = src.transform
-    fAff = src.affine    
+
+   
 
 fXYCent = fAff * Affine.translation(0.5,0.5)
 rc2ll_fine = lambda r, c: (c, r) * fXYCent
