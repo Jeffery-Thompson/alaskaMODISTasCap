@@ -43,7 +43,7 @@ with rasterio.open(iDir3 +  inFile, 'r', driver='GTiff', nodatavals = -9999.) as
     fMask = src.read_masks(1)
     tcTrends = fIn.squeeze()
     rP,cP = np.where(src.read_masks(1) )
-    crsOut = src.crs()
+    crsOut = src.crs
     #rT,cT = np.where(src.read_masks(1) > -9999)
     traOut = src.transform
     affOut = src.affine 
@@ -94,12 +94,22 @@ clImg = tcFlat[:,0]
 clImg[tc_valid] = clMems
 clImg = clImg.reshape(rows,cols,order='F')
 
+cl_nan = np.argwhere(np.isnan(clImg))
+clImg[cl_nan]=-9999
+clImg = clImg.astype('int16')
 imgplot= plt.imshow(clImg)
 
 
 with rasterio.open(iDir3 + 'TCTrends_clust'+'.tif', 'w', driver='GTiff', height=rows,
-                       width=cols, count=1, dtype='int64',
+                       width=cols, count=1, dtype='int16',
                        crs=crsOut, transform=traOut, nodata=-9999) as dst:
+    dst.write(clImg, 1)
+
+
+
+
+
+
 
 
 tc_valid = np.argwhere(np.isfinite(tcFlat[:,0]))
