@@ -21,6 +21,7 @@ iDir = '/Users/jeth6160/Desktop/permafrost/Arctic/WHRC/output/'
 iDir2 = '/Users/jeth6160/Desktop/permafrost/PermafrostZonationIndex/output/'
 iDir3 = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
 
+"""
 courseFile = 'AK_PctBurned_v2.tif'
 with rasterio.open(iDir +  courseFile, 'r', driver='GTiff', nodatavals = -9999.) as src:
     cIn = src.read()
@@ -52,6 +53,7 @@ with rasterio.open(iDir +  courseFile, 'r', driver='GTiff', nodatavals = -9999.)
 tLon, tLat = np.vectorize(rc2ll_course, otypes=[np.float, np.float])(rT,cT) 
     
 lstFlat = deltaLST[rT,cT]
+"""
 
 courseFile = 'TC_TrendsAll_v3.tif'
 with rasterio.open(iDir3 +  courseFile, 'r', driver='GTiff', nodatavals = -9999.) as src:
@@ -74,8 +76,14 @@ tcGreenFlat = tassCap[1,rTC,cTC]
 tcWetFlat = tassCap[2,rTC,cTC]
 
 fineFile = 'AK_PZI.tif'
-
-   
+with rasterio.open(iDir2 +  fineFile, 'r', driver='GTiff', nodatavals = -9999.) as src:
+    fIn = src.read()
+    fMask = src.read_masks(1)
+    pzi = fIn.squeeze()
+    rP,cP = np.where(src.read_masks(1) )
+    #rT,cT = np.where(src.read_masks(1) > -9999)
+    fTra = src.transform
+    fAff = src.affine    
 
 fXYCent = fAff * Affine.translation(0.5,0.5)
 rc2ll_fine = lambda r, c: (c, r) * fXYCent
@@ -87,12 +95,12 @@ pziLon, pziLat = np.vectorize(rc2ll_fine, otypes=[np.float, np.float])(rP,cP)
 #
 #b_in_p_Col,b_in_p_Row = np.vectorize(ll2rc_fine, otypes=[np.int, np.int])(bLat, bLon) 
 #t_in_p_Col,t_in_p_Row = np.vectorize(ll2rc_fine, otypes=[np.int, np.int])(tLat, tLon) 
-#tc_in_p_Col,tc_in_p_Row = np.vectorize(ll2rc_fine, otypes=[np.int, np.int])(tcLat, tcLon) 
+tc_in_p_Col,tc_in_p_Row = np.vectorize(ll2rc_fine, otypes=[np.int, np.int])(tcLat, tcLon) 
 
 pzi_in_tc_Col,pzi_in_tci_Row = np.vectorize(ll2rc_course, otypes=[np.int, np.int])(pziLat, pziLon) 
 
-burnPZIFlat = pzi[b_in_p_Row,b_in_p_Col]
-lstPZIFlat = pzi[t_in_p_Row,t_in_p_Col]
+#burnPZIFlat = pzi[b_in_p_Row,b_in_p_Col]
+#lstPZIFlat = pzi[t_in_p_Row,t_in_p_Col]
 tcPZIFlat = pzi[tc_in_p_Row,tc_in_p_Col]
     
 pziBrightFlat = tassCap[0,pzi_in_tc_Col,pzi_in_tci_Row]
@@ -115,6 +123,10 @@ meanGreen[:] = np.nan
 meanWet = np.empty([99,1])
 meanWet[:] = np.nan
 
+stdBright = meanBright.copy()
+stdGreen = meanGreen.copy()
+stdWet = meanWet.copy()
+
 plt.figure()
 plt.scatter(pziLon[tInd],pziLat[tInd],marker='.',color='black')
 plt.show()
@@ -135,60 +147,74 @@ for i in range(len(ed)):
      
     if tInd[0].size != 0:
         meanBright[i] = pziBrightFlat[tInd].mean()
+        stdBright[i] = pziBrightFlat[tInd].std()
+        
         meanGreen[i] = pziGreenFlat[tInd].mean()
+        stdGreen[i] = pziGreenFlat[tInd].std()
+        
         meanWet[i] = pziWetFlat[tInd].mean()
-
-
+        stdWet[i] = pziWetFlat[tInd].std()
+        
+        
+rangeBright=np.array([np.nanmax((meanBright+stdBright).squeeze()),np.nanmin((meanBright-stdBright).squeeze())])
+rangeGreen=np.array([np.nanmax((meanGreen+stdGreen).squeeze()),np.nanmin((meanGreen-stdGreen).squeeze())])
+rangeWet=np.array([np.nanmax((meanWet+stdWet).squeeze()),np.nanmin((meanWet-stdWet).squeeze())])        
+        
+grey=[.8,.8,.8]
 f, (ax1,ax2,ax3) = plt.subplots(3,1,sharex=True)
 #f, (ax1) = plt.subplots(1,1,sharex=True)
-ax1.scatter(x,meanBright)
+#ax1.scatter(x,meanBright)
+ax1.fill_between(x.squeeze(),(meanBright+stdBright).squeeze(),(meanBright-stdBright).squeeze(),color=grey)
+ax1.plot(x,meanBright,'b-')
 #ax1.xaxis.set_label('PZI')
 ax1.tick_params(which='both',right = 'on',left = 'on', bottom='on', top='on',labelleft = 'on',labelbottom='off') 
-ax1.set_ylabel('Avg. TC Bright Trend')
+ax1.set_ylabel('Bright Trend')
 #ax1.yaxis.set_label_position('left')
 #ax1.y_label('Avg. TC Bright Trend')
 ax1.set_title('Averaged Tassled Cap Trends by Permafrost Zone ')
-ax1.text(0.01,np.nanmax(meanBright),'no permafrost',style='italic',rotation=90,verticalalignment='top')
-ax1.plot([0.05,0.05],[np.nanmax(meanBright),np.nanmin(meanBright)],'k--')
-ax1.text(0.06,np.nanmax(meanBright),'isolated',style='italic',rotation=90,verticalalignment='top')
-ax1.plot([0.1,0.1],[np.nanmax(meanBright),np.nanmin(meanBright)],'k--')
-ax1.text(0.11,np.nanmax(meanBright),'sporadic',style='italic',rotation=90,verticalalignment='top')
-ax1.plot([0.5,0.5],[np.nanmax(meanBright),np.nanmin(meanBright)],'k--')
-ax1.text(0.51,np.nanmax(meanBright),'discontinous',style='italic',rotation=90,verticalalignment='top')
-ax1.plot([0.9,0.9],[np.nanmax(meanBright),np.nanmin(meanBright)],'k--')
-ax1.text(0.91,np.nanmax(meanBright),'continous',style='italic',rotation=90,verticalalignment='top')
+ax1.text(0.01,rangeBright.max(),'no permafrost',style='italic',rotation=90,verticalalignment='top')
+ax1.plot([0.05,0.05],[rangeBright.max(),rangeBright.min(),],'k--')
+ax1.text(0.06,rangeBright.max(),'isolated',style='italic',rotation=90,verticalalignment='top')
+ax1.plot([0.1,0.1],[rangeBright.max(),rangeBright.min()],'k--')
+ax1.text(0.11,rangeBright.max(),'sporadic',style='italic',rotation=90,verticalalignment='top')
+ax1.plot([0.5,0.5],[rangeBright.max(),rangeBright.min()],'k--')
+ax1.text(0.51,rangeBright.max(),'discontinous',style='italic',rotation=90,verticalalignment='top')
+ax1.plot([0.9,0.9],[rangeBright.max(),rangeBright.min()],'k--')
+ax1.text(0.91,rangeBright.max(),'continous',style='italic',rotation=90,verticalalignment='top')
 
 
 #plt.subplot(312)
-ax2.scatter(x,meanGreen)
-ax2.text(0.01,np.nanmax(meanGreen),'no permafrost',style='italic',rotation=90,verticalalignment='top')
-ax2.plot([0.05,0.05],[np.nanmax(meanGreen),np.nanmin(meanGreen)],'k--')
-ax2.text(0.06,np.nanmax(meanGreen),'isolated',style='italic',rotation=90,verticalalignment='top')
-ax2.plot([0.1,0.1],[np.nanmax(meanGreen),np.nanmin(meanGreen)],'k--')
-ax2.text(0.11,np.nanmax(meanGreen),'sporadic',style='italic',rotation=90,verticalalignment='top')
-ax2.plot([0.5,0.5],[np.nanmax(meanGreen),np.nanmin(meanGreen)],'k--')
-ax2.text(0.51,np.nanmax(meanGreen),'discontinous',style='italic',rotation=90,verticalalignment='top')
-ax2.plot([0.9,0.9],[np.nanmax(meanGreen),np.nanmin(meanGreen)],'k--')
-ax2.text(0.91,np.nanmax(meanGreen),'continous',style='italic',rotation=90,verticalalignment='top')
+ax2.fill_between(x.squeeze(),(meanGreen+stdGreen).squeeze(),(meanGreen-stdGreen).squeeze(),color=grey)
+ax2.plot(x,meanGreen,'b-')
+ax2.text(0.01,rangeGreen.max(),'no permafrost',style='italic',rotation=90,verticalalignment='top')
+ax2.plot([0.05,0.05],[rangeGreen.max(),rangeGreen.min()],'k--')
+ax2.text(0.06,rangeGreen.max(),'isolated',style='italic',rotation=90,verticalalignment='top')
+ax2.plot([0.1,0.1],[rangeGreen.max(),rangeGreen.min()],'k--')
+ax2.text(0.11,rangeGreen.max(),'sporadic',style='italic',rotation=90,verticalalignment='top')
+ax2.plot([0.5,0.5],[rangeGreen.max(),rangeGreen.min()],'k--')
+ax2.text(0.51,rangeGreen.max(),'discontinous',style='italic',rotation=90,verticalalignment='top')
+ax2.plot([0.9,0.9],[rangeGreen.max(),rangeGreen.min()],'k--')
+ax2.text(0.91,rangeGreen.max(),'continous',style='italic',rotation=90,verticalalignment='top')
 #ax2.xaxis.set_label('Veg. Destruction')
-ax2.set_ylabel('Avg. TC Green Trend')
+ax2.set_ylabel('Green Trend')
 ax2.tick_params(which='both',right = 'on',left = 'on', bottom='on', top='on',labelleft = 'on',labelbottom='off') 
 #ax2.set_title('Average TC Green Trend')
 
 #plt.subplot(313)
-ax3.scatter(x,meanWet)
-ax3.text(0.01,np.nanmax(meanWet),'no permafrost',style='italic',rotation=90,verticalalignment='top')
-ax3.plot([0.05,0.05],[np.nanmax(meanWet),np.nanmin(meanWet)],'k--')
-ax3.text(0.06,np.nanmax(meanWet),'isolated',style='italic',rotation=90,verticalalignment='top')
-ax3.plot([0.1,0.1],[np.nanmax(meanWet),np.nanmin(meanWet)],'k--')
-ax3.text(0.11,np.nanmax(meanWet),'sporadic',style='italic',rotation=90,verticalalignment='top')
-ax3.plot([0.5,0.5],[np.nanmax(meanWet),np.nanmin(meanWet)],'k--')
-ax3.text(0.51,np.nanmax(meanWet),'discontinous',style='italic',rotation=90,verticalalignment='top')
-ax3.plot([0.9,0.9],[np.nanmax(meanWet),np.nanmin(meanWet)],'k--')
-ax3.text(0.91,np.nanmax(meanWet),'continous',style='italic',rotation=90,verticalalignment='top')
+ax3.fill_between(x.squeeze(),(meanWet+stdWet).squeeze(),(meanWet-stdWet).squeeze(),color=grey)
+ax3.plot(x,meanWet,'b-')
+ax3.text(0.01,rangeWet.max(),'no permafrost',style='italic',rotation=90,verticalalignment='top')
+ax3.plot([0.05,0.05],[rangeWet.max(),rangeWet.min()],'k--')
+ax3.text(0.06,rangeWet.max(),'isolated',style='italic',rotation=90,verticalalignment='top')
+ax3.plot([0.1,0.1],[rangeWet.max(),rangeWet.min()],'k--')
+ax3.text(0.11,rangeWet.max(),'sporadic',style='italic',rotation=90,verticalalignment='top')
+ax3.plot([0.5,0.5],[rangeWet.max(),rangeWet.min()],'k--')
+ax3.text(0.51,rangeWet.max(),'discontinous',style='italic',rotation=90,verticalalignment='top')
+ax3.plot([0.9,0.9],[rangeWet.max(),rangeWet.min()],'k--')
+ax3.text(0.91,rangeWet.max(),'continous',style='italic',rotation=90,verticalalignment='top')
 #ax3.xaxis.set_label('Veg. Destruction')
 ax3.set_xlabel('PZI')
-ax3.set_ylabel('Avg. TC Wet Trend')
+ax3.set_ylabel('Wet Trend')
 ax3.tick_params(which='both',right = 'on',left = 'on', bottom='on', top='on',labelleft = 'on',labelbottom='on') 
 #ax3.set_title('Average TC Wet Trend')
 
