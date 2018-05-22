@@ -113,6 +113,8 @@ imgTemp = np.zeros([cIn.shape[1],cIn.shape[2]],dtype='int8')
 imgInPoly_i = np.where(imgInPoly>0)
 imgTemp[iR[imgInPoly_i],iC[imgInPoly_i]]=1
 
+bands,rows, cols = cIn.shape
+
 #imgTemp2 = imgTemp.reshape(iR,iC,order='F')
 
 #ptsCount = imgInPoly.sum()
@@ -173,15 +175,38 @@ plt.title('AIC Elbow Curve')
 
 
 # pick number of clusters from above and then run and save
+
+numCl = 3
+gaussMixCl = GaussianMixture(n_components=numCl,covariance_type='full',
+                               max_iter=100,verbose=False,init_params='kmeans',
+                               random_state=42)
+clusterFit= gaussMixCl.fit(dataClst)
+clMems = gaussMixCl.predict(dataClst)
+
+# commented section is not needed
 """
-numCl = 7
-mBkMeansCl = MiniBatchKMeans(n_clusters=numCl,init='random',max_iter=20,
-                           batch_size=np.round(cIn[:,iR[imgInPoly_i],iC[imgInPoly_i]].transpose().shape[0]*s_size).astype(int),verbose=False,
-                           compute_labels=True,random_state=42)
-clusterFit= mBkMeansCl.fit(cIn[:,iR[imgInPoly_i],iC[imgInPoly_i]].transpose())
-clMems = mBkMeansCl.labels_
+tcFlat = cIn.reshape(1,bands*rows*cols,order='F').reshape(rows*cols,bands)
+tc_i = np.where(tcFlat==-9999)
+tcFlat[tc_i]=np.nan
 
+tc_valid = np.argwhere(np.isfinite(tcFlat[:,0])).squeeze()
 
+clImg = tcFlat[:,0]
+#clImg=np.ndarray([rows,cols],dtype=int)
+#clImg[:,:] = -9999
+clImg[tc_valid] = clMems
+cl_nan = np.argwhere(np.isnan(clImg))
+clImg[cl_nan]=-9999
+clImg = clImg.reshape(rows,cols,order='F')
+clImg = clImg.astype('int16')
+imgplot= plt.imshow(clImg)
+imgplot.set_cmap('nipy_spectral')
+
+with rasterio.open(iDir3 + 'TCTrends_InterMontain_3cl'+'.tif', 'w', driver='GTiff', height=rows,
+                       width=cols, count=1, dtype='int16',
+                       crs=crsOut, transform=traOut, nodata=-9999) as dst:
+    dst.write(clImg, 1)
+"""
 imgTemp3 = imgTemp.copy()
 imgTemp3[iR[imgInPoly_i],iC[imgInPoly_i]]=(clMems+1).transpose()
 #imgTemp4 = imgTemp3.reshape(iR,iC,order='F')
@@ -190,7 +215,9 @@ plt.figure()
 plt.imshow(imgTemp3)
 imgTemp4 = imgTemp3.astype('uint8')
 
-with rasterio.open(oDir + 'AK_L2_Cluster7'+'.tif', 'w', driver='GTiff', height=imgTemp4.shape[0],
+nD_i=np.where(imgTemp==0)
+imgTemp4[nD_i] = 0
+with rasterio.open(oDir + 'AK_IntMon_GausMix_3cl'+'.tif', 'w', driver='GTiff', height=imgTemp4.shape[0],
                    width=imgTemp4.shape[1], count=1, dtype='uint8',
                    crs=cCrs, transform=cTra,nodata=0) as dst:
     dst.write(imgTemp4, 1)
