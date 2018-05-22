@@ -44,6 +44,7 @@ oDir = '/Users/jeth6160/Desktop/permafrost/Arctic/WHRC/output/'
 
 iDir2 = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
 iDir3 = '/Users/jeth6160/Desktop/permafrost/Alaska/GINA/AKLCC_boundaries/'
+iDir4='/Users/jeth6160/Desktop/permafrost/Alaska/USGS/'
 
 
 #Crs = Proj('+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0')
@@ -63,7 +64,8 @@ r = 6542
 c = 8514 
 
 #with fiona.open(iDir3+'AK_LCC_GCS_WGS84_b20k.shp') as shapefile:
-with fiona.open(iDir3+'AK_LCC_GCS_WGS84_edit.shp') as shapefile:
+#with fiona.open(iDir3+'AK_LCC_GCS_WGS84_edit.shp') as shapefile:
+with fiona.open(iDir4+'akecoregions_intmontane.shp') as shapefile:
     shpGeom = [feature["geometry"] for feature in shapefile]
     shpCrs = shapefile.crs
     shpBounds=shapefile.bounds
@@ -79,9 +81,9 @@ shpCut = [()]
 
 #with rasterio.open(iDir + 'FRP_2003_2013_QD.nc','r', driver='NetCDF') as src:
 #with rasterio.open(iDir + 'dNBR_2001_2012_QD.nc','r', driver='NetCDF') as src:
-#with rasterio.open(iDir + 'PctBurned_2001_2012_QD.nc','r', driver='NetCDF') as src:
+with rasterio.open(iDir + 'PctBurned_2001_2012_QD.nc','r', driver='NetCDF') as src:
 #with rasterio.open(iDir + 'VegDestructionIndex_2003_2012_QD.nc','r', driver='NetCDF') as src:
-with rasterio.open(iDir + 'dLST_2003_2012_QD.nc','r', driver='NetCDF') as src: 
+#with rasterio.open(iDir + 'dLST_2003_2012_QD.nc','r', driver='NetCDF') as src: 
 #with rasterio.open(iDir + 'PctBorealPixel_QD.nc','r', driver='NetCDF') as src:
 #with rasterio.open(iDir + 'PZI.flt','r', driver='EHdr') as src:
     profile = src.profile 
@@ -133,7 +135,8 @@ with rasterio.open(iDir + 'dLST_2003_2012_QD.nc','r', driver='NetCDF') as src:
     dst_array=np.expand_dims(dst_array,0)
 
     #with rasterio.open(oDir+'AK_PctBorealPixel_v2.tif', 'w', **profile) as dst:
-    with rasterio.open(oDir+'AK_dLST.tif', 'w', **profile) as dst:
+    #with rasterio.open(oDir+'AK_dLST.tif', 'w', **profile) as dst:
+    with rasterio.open(oDir+'AK_IntMont_PctBurn.tif', 'w', **profile) as dst:
         dst.write(dst_array)
     
     
