@@ -72,7 +72,7 @@ ldWet = [0.1147, 0.2489, 0.2408, 0.3132, -0.3122, -0.6416, -0.5087]
 r = 6542
 c = 8514 
 
-years = range(2001,2018)
+years = range(2000,2018)
 print(list(years))
 
 #for year in years:
@@ -84,8 +84,8 @@ print(list(years))
 #b6= []
 #b7= []
 
-#for year in [years[0]]:
-for year in years:
+for year in [years[0]]:
+#for year in years:
     b1Files = glob.glob(iDir+fPre+b1p+str(year)+fPst)
     b2Files = glob.glob(iDir+fPre+b2p+str(year)+fPst)
     b3Files = glob.glob(iDir+fPre+b3p+str(year)+fPst)
@@ -239,7 +239,7 @@ for year in years:
                        width=tcBright.shape[1], count=1, dtype='float64',
                        crs=crsOut, transform=traOut, nodata=mask_out) as dst:
         dst.write(tcBright.squeeze(), 1)
-                
+"""                
     with rasterio.open(oDir + str(year) + '_TCGreen'+'.tif', 'w', driver='GTiff', height=tcGreen.shape[0],
                        width=tcGreen.shape[1], count=1, dtype='float64',
                        crs=crsOut, transform=traOut, nodata=mask_out) as dst:
@@ -268,7 +268,7 @@ for year in years:
           
 #plt.imshow(b1.squeeze())
 #t = np.array(l)
-
+"""
 
 #[sTime, sClock] = time.time(),time.clock() 
 #b1med = np.median(b1,axis=0)
