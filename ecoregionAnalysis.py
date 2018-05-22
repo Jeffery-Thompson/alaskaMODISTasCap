@@ -16,7 +16,9 @@ from shapely.geometry import Polygon#, shape, mapping
 from shapely.ops import cascaded_union#, unary_union
 from matplotlib import pyplot as plt
 from tqdm import tqdm 
-from sklearn.cluster import MiniBatchKMeans
+#from sklearn.cluster import MiniBatchKMeans
+from sklearn.mixture import GaussianMixture
+from rasterio.tools.mask import mask
 
 
 #iDir = '/Users/jeth6160/Desktop/permafrost/Alaska/EPA/'
@@ -30,7 +32,7 @@ shpIn = gpd.read_file(iDir+fIn)
 iDir2 = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
 fIn2 = 'TC_TrendsAll_v3.tif'
 
-
+oDir = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
 
 # FID for northern most shapefils 6,11,14
 #roi = shpIn.iloc[6]
@@ -96,6 +98,7 @@ with rasterio.open(iDir2 + fIn2, 'r', driver='GTiff') as src:
     iR,iC = np.where(src.read_masks(1) > 0)
     cTra = src.transform
     cAff = src.affine
+    cCrs = src.crs
 
 cXYCent = cAff * Affine.translation(0.5,0.5)    
 rc2ll_course = lambda r, c: (c, r) * cXYCent
@@ -120,26 +123,57 @@ imgTemp[iR[imgInPoly_i],iC[imgInPoly_i]]=1
 s_size = 0.2
 nCl = range(1, 20)
 inertias=[]
+aic=[]
+bic  = []
+conv = []
+
+dataClst = cIn[:,iR[imgInPoly_i],iC[imgInPoly_i]].transpose()
+
 for i in tqdm(nCl):
     #print('MiniBatchKMeans with clusters = ',i)
-    mBkMeans = MiniBatchKMeans(n_clusters=i,init='random',max_iter=20,
-                           batch_size=np.round(cIn[:,iR[imgInPoly_i],iC[imgInPoly_i]].transpose().shape[0]*s_size).astype(int),verbose=False,
-                           compute_labels=True,random_state=42)
+    #mBkMeans = MiniBatchKMeans(n_clusters=i,init='random',max_iter=20,
+    #                       batch_size=np.round(cIn[:,iR[imgInPoly_i],iC[imgInPoly_i]].transpose().shape[0]*s_size).astype(int),verbose=False,
+    #                       compute_labels=True,random_state=42)
     
-    mBkMeans.fit(cIn[:,iR[imgInPoly_i],iC[imgInPoly_i]].transpose())
+    #mBkMeans.fit(cIn[:,iR[imgInPoly_i],iC[imgInPoly_i]].transpose())
     #clScores = mBkMeans[i].fit(dataClst).score(dataClst)
-    inertias.append(mBkMeans.inertia_)
+    #inertias.append(mBkMeans.inertia_)
 
-plt.figure()
-plt.plot(nCl,inertias)
-plt.xticks(nCl)
+    gaussMix = GaussianMixture(n_components=i,covariance_type='full',
+                               max_iter=100,verbose=False,init_params='kmeans',
+                               random_state=42)
+    
+    gaussMix.fit(dataClst)
+    #clScores = mBkMeans[i].fit(dataClst).score(dataClst)
+    #inertias.append(gaussMix.inertia_)
+    aic.append(gaussMix.aic(dataClst))
+    bic.append(gaussMix.bic(dataClst))
+    conv.append(gaussMix.converged_)
 
+
+# plot the resutls
+plt.figure()    
+plt.plot(nCl,bic)
+plt.xticks(np.arange(0, 20, step=2))
 plt.xlabel('Number of Clusters')
 
 plt.ylabel('Score')
 
-plt.title('Elbow Curve')  
+plt.title('BIC Elbow Curve')  
 
+# plot the resutls
+plt.figure()
+plt.plot(nCl,aic)
+plt.xticks(np.arange(0, 20, step=2))
+plt.xlabel('Number of Clusters')
+
+plt.ylabel('Score')
+
+plt.title('AIC Elbow Curve')  
+
+
+# pick number of clusters from above and then run and save
+"""
 numCl = 7
 mBkMeansCl = MiniBatchKMeans(n_clusters=numCl,init='random',max_iter=20,
                            batch_size=np.round(cIn[:,iR[imgInPoly_i],iC[imgInPoly_i]].transpose().shape[0]*s_size).astype(int),verbose=False,
@@ -154,6 +188,15 @@ imgTemp3[iR[imgInPoly_i],iC[imgInPoly_i]]=(clMems+1).transpose()
 
 plt.figure()
 plt.imshow(imgTemp3)
+imgTemp4 = imgTemp3.astype('uint8')
+
+with rasterio.open(oDir + 'AK_L2_Cluster7'+'.tif', 'w', driver='GTiff', height=imgTemp4.shape[0],
+                   width=imgTemp4.shape[1], count=1, dtype='uint8',
+                   crs=cCrs, transform=cTra,nodata=0) as dst:
+    dst.write(imgTemp4, 1)
+
+"""
+
 
 """
 ptsContained = shape_path.contains_points(imgPoints)
