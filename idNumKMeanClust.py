@@ -16,6 +16,7 @@ from matplotlib import pyplot as plt
 from numpy import random
 import matplotlib.image as mpimg
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.mixture import GaussianMixture
 from tqdm import tqdm 
 
 # set input output directories
@@ -55,8 +56,10 @@ dataClst=tcFlat[tc_valid,:]
 batch_sz = np.round(dataClst.shape[0]*s_size).astype(int)
 
 # do the clusting
-nCl = range(1, 20)
+nCl = range(1, 30)
 inertias=[]
+aic=[]
+bic  = []
 '''
 mBkMeans = [MiniBatchKMeans(n_clusters=i,init='random',max_iter=20,
                            batch_size=batch_sz,verbose=False,
@@ -66,26 +69,38 @@ clScores = [mBkMeans[i].fit(dataClst).score(dataClst) for i in range(len(mBkMean
 '''
 for i in tqdm(nCl):
     #print('MiniBatchKMeans with clusters = ',i)
-    mBkMeans = MiniBatchKMeans(n_clusters=i,init='random',max_iter=20,
+    #mBkMeans = MiniBatchKMeans(n_clusters=i,init='random',max_iter=20,
+    gaussMix = GaussianMixture(n_clusters=i,init='random',max_iter=100,
                            batch_size=batch_sz,verbose=False,
                            compute_labels=True,random_state=42)
     
-    mBkMeans.fit(dataClst)
+    gaussMix.fit(dataClst)
     #clScores = mBkMeans[i].fit(dataClst).score(dataClst)
-    inertias.append(mBkMeans.inertia_)
-    
+    #inertias.append(gaussMix.inertia_)
+    aic.append(gaussMix.aic_)
+    bic.append(gaussMix.bic_)
     
 
 # plot the resutls
-plt.plot(nCl,clScores)
+plt.plot(nCl,bic)
 
 plt.xlabel('Number of Clusters')
 
 plt.ylabel('Score')
 
-plt.title('Elbow Curve')  
+plt.title('BIC Elbow Curve')  
+
+# plot the resutls
+plt.plot(nCl,aic)
+
+plt.xlabel('Number of Clusters')
+
+plt.ylabel('Score')
+
+plt.title('AIC Elbow Curve')  
 
 
+"""
 # 5 clusters seems about where the information starts to become less useful    
 mBkMeans5cl = MiniBatchKMeans(n_clusters=5,init='random',max_iter=20,
                            batch_size=batch_sz,verbose=True,
@@ -111,7 +126,7 @@ with rasterio.open(iDir3 + 'TCTrends_clust_5cl'+'.tif', 'w', driver='GTiff', hei
 
 """
 
-
+"""
 # from web, code to estimate number of clusters
 
 kmeans = [KMeans(n_clusters=i) for i in Nc]
