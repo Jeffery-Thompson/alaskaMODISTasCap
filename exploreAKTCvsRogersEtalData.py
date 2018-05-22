@@ -23,21 +23,21 @@ import numpy.ma as ma
 # set input output directories
 iDir = '/Users/jeth6160/Desktop/permafrost/Arctic/WHRC/output/'
 #iDir = '/Users/jeth6160/Desktop/permafrost/PermafrostZonationIndex/output/'
-#iDir2 = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
+iDir2 = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
 #iDir = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
 #iDir2 = '/Users/jeth6160/Desktop/permafrost/PermafrostZonationIndex/output/'
 #iDir = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
-iDir2 = '/Users/jeth6160/Desktop/permafrost/PermafrostZonationIndex/output/'
+#iDir2 = '/Users/jeth6160/Desktop/permafrost/PermafrostZonationIndex/output/'
 
 
 oDir = '/Users/jeth6160/Desktop/permafrost/Alaska/TasseledCapAnalysis/output/'
 
-#fineFile = 'TC_TrendsAll_v3.tif'
-fineFile = 'AK_PZI.tif'
+fineFile = 'TC_TrendsAll_v3.tif'
+#fineFile = 'AK_PZI.tif'
 #courseFile = 'AK_meanFRP.tif'
-courseFile = 'AK_PctBurned.tif'
+#courseFile = 'AK_PctBurned.tif'
 #courseFile = 'AK_PctBorealPixel_v2.tif' 
-#courseFile = 'AK_VegDestructionIndex.tif'
+courseFile = 'AK_VegDestructionIndex.tif'
 #courseFile = 'AK_PZI.tif' 
  
 
@@ -78,8 +78,8 @@ with rasterio.open(iDir2 +  fineFile, 'r', driver='GTiff') as src:
 with rasterio.open(iDir2 +  fineFile, 'r', driver='GTiff') as src:
     fIn = src.read()
     bright = fIn[0,:,:]
-    #green = fIn[1,:,:]
-    #wet = fIn[2,:,:]
+    green = fIn[1,:,:]
+    wet = fIn[2,:,:]
     fineBound=src.bounds
     fineCrs = src.crs
     fAff = src.affine
@@ -91,19 +91,21 @@ ll2rc_fine = lambda y, x: (x,y) * ~fXYCent
 fCol,fRow = np.vectorize(ll2rc_fine, otypes=[np.int, np.int])(cLat, cLon)
 
 # masked arrays are the valid values, not values to ignore
-plotData = np.column_stack([frp[iR,iC],bright[fRow,fCol]])
-plotMask = (plotData <0)
+#plotData = np.column_stack([frp[iR,iC],bright[fRow,fCol]])
+plotData = np.column_stack([frp[iR,iC],wet[fRow,fCol]])
+plotMask = (plotData == -9999)
 plotData = ma.masked_array(plotData,mask=plotMask)
 
 f, (ax1) = plt.subplots(1,1,sharex=True)
 ax1.scatter(plotData[:,0],plotData[:,1])
-ax1.xaxis.set_label('Percent Burned')
-ax1.yaxis.set_label('PZI')
+#ax1.xaxis.set_label('Percent Burned')
+ax1.xaxis.set_label('Percent Burned ')
+ax1.yaxis.set_label('TC Wet Trend')
 ax1.tick_params(which='both',right = 'on',left = 'on', bottom='on', top='on',labelleft = 'on',labelbottom='on') 
-ax1.set_title('PZI vs FRP')
+ax1.set_title('TC Wet Trend vs Pct Burn')
 
 """
-#f, (ax1,ax2,ax3) = plt.subplots(1,3,sharex=True)
+f, (ax1,ax2,ax3) = plt.subplots(1,3,sharex=True)
 f, (ax1) = plt.subplots(1,1,sharex=True)
 ax1.scatter(frp[iR,iC],bright[fRow,fCol])
 ax1.xaxis.set_label('Veg. Destruction')
