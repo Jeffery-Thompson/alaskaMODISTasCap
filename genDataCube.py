@@ -24,16 +24,18 @@ This file processes MODIS Land Surface Reflectance Data (MOD09A1) for
         b5: NIR2 0.3506 0.4882 -0.3122
         b6: SWIR1 0.2136 -0.0036 -0.6416
         b7: SWIR2 0.2678 -0.4169 -0.5087
+        
 """
 
+# importing the required python libraries 
 import numpy as np
-import pylab as pl
-import scipy as sp
+#import pylab as pl
+#import scipy as sp
 import matplotlib.pyplot as plt
 import datetime # datetime commands
-import re # python regular expressions
-import os # python os tools
-import fnmatch # function matching tools
+#import re # python regular expressions
+#import os # python os tools
+# fnmatch # function matching tools
 import rasterio
 import glob
 import time
@@ -44,11 +46,13 @@ oDir = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
 #print(iDir,oDir)
 
 # set file pre/post-fixes
+#   prefix is standard MODIS file prefix
 fPre = 'MOD09A1.005_sur_refl_'
 fPst = '*.tif'
-print(fPre,fPst)
+#print(fPre,fPst)
 
 # set file band prefixes
+#   MODIS data are split into individual files, one for each band
 b1p = 'b01_doy'
 b2p = 'b02_doy'
 b3p = 'b03_doy'
