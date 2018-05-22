@@ -15,6 +15,7 @@ import numpy as np
 import numpy.ma as ma
 import pylab as pl
 import scipy as sp
+from tqdm import tqdm 
 from scipy import stats 
 import matplotlib.pyplot as plt
 import datetime # datetime commands
@@ -29,7 +30,7 @@ import time
 iDir = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
 oDir = '/Users/jeth6160/Desktop/permafrost/Alaska/AppEARS/allAK/output/'
 
-fBrPre = '*_dataCube'
+fBrPre = '*_TCBright'
 fGrPre = '*_TCGreen'
 fWtPre = '*_TCWet'
 fPst = '.tif'
@@ -54,7 +55,7 @@ crsOut =[]
 print('Building data cubes...')
 
 for i in range(0,len(filesIn)):
-    with rasterio.open(filesIn[i]) as src:
+    with rasterio.open(filesIn[i],nodata=-28672) as src:
         tIn = src.read()
         crsOut = src.crs
         traOut = src.transform
@@ -65,9 +66,9 @@ dataCube= np.array(dataCube)
 dataCube = np.rollaxis(dataCube,0,3)  
 
 #dataMasked = ma.masked_values(dataCube,-54743.4496)
-#data_i = dataCube[:,:,0]!=-54743.4496
+data_i = dataCube[:,:,0]!=-28672
 #data_i = dataCube[:,:,0]!=25873.612799999995
-data_i = dataCube[:,:,0]!=22759.833599999998
+#data_i = dataCube[:,:,0]!=22759.833599999998
 #np.savez(str(oDir+'dataCube.npz'),dataCube)
 validData = dataCube[data_i,:]
 
@@ -88,18 +89,20 @@ tsRegResults = np.apply_along_axis(stats.mstats.theilslopes,1,validData)
 #tsRegResults = np.apply_along_axis(stats.mstats.theilslopes,1,validData[0:999999,:])
 
 tsSlopeImg = np.full((r,c), -9999.)
+#tsSlopeImg = np.full(tIn.shape(), -9999.)
 #tsIntImg = np.full((r,c), -9999.)
 #tsLoImg = np.full((r,c), -9999.)
 #tsUpImg = np.full((r,c), -9999.)
 
-tsSlopeImg[data_i] = tsRegResults[:,1]
+tsSlopeImg[data_i] = tsRegResults[:,0]
 
 [eTime, eClock] = time.time(),time.clock()  
 print('System time for numpy version is: ',eTime-sTime)
 print('Clock time for numpy version is: ',eClock-sClock)
 
 #with rasterio.open(oDir + 'TC_BrightTrends'+'.tif', 'w', driver='GTiff', height=tsSlopeImg.shape[0],
-with rasterio.open(oDir + 'TC_GreenTrends'+'.tif', 'w', driver='GTiff', height=tsSlopeImg.shape[0],
+#with rasterio.open(oDir + 'TC_GreenTrends'+'.tif', 'w', driver='GTiff', height=tsSlopeImg.shape[0],
+with rasterio.open(oDir + 'TC_WetTrends'+'.tif', 'w', driver='GTiff', height=tsSlopeImg.shape[0],
                    width=tsSlopeImg.shape[1], count=1, dtype='float64',
                    crs=crsOut, transform=traOut,nodata=-9999) as dst:
     dst.write(tsSlopeImg, 1)
