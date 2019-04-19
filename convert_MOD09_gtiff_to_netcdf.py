@@ -27,16 +27,20 @@ This file processes MODIS Land Surface Reflectance Data (MOD09A1) for
 """
 
 import numpy as np
+import numpy.ma as ma
 import pylab as pl
 import scipy as sp
 import matplotlib.pyplot as plt
 import datetime # datetime commands
+import xarray as xr
 import re # python regular expressions
 import os # python os tools
 import fnmatch # function matching tools
 import rasterio
 import glob
 import time
+#import h5py
+#import re
 
 # set input output directories
 iDir = '/Volumes/spatialData/earth_lab/alaskaTasseledCap/AppEARS/allAK/MOD09A1/'
@@ -229,6 +233,10 @@ for year in [years[0]]:
         qc=[]
         solar=[]
         state=[]
+        band_names=[]
+        qc_names=[]
+        state_names=[]
+        solar_names=[]
         #files = sorted(glob.glob(iDir+fPre+str(year)+str(day)+fPst))
         for key in [*modDict]:
             file = glob.glob(iDir+fPre+str(key)+dPre+str(year)+str(day)+fPst)
@@ -237,10 +245,11 @@ for year in [years[0]]:
             print(key)
             
             #with rasterio.open(file, driver="GTiff") as src:
-            ndv = modDict.get(key).get('fill_value')
-            with rasterio.open(file[0], driver='GTiff', nodatavalue = ndv) as src:
+            #ndv = modDict.get(key).get('fill_value')
+            with rasterio.open(file[0], driver='GTiff') as src:
                 #tIn = src.read(1, masked=True)
                 tIn = src.read()
+                #tIn = src.read()
                 crsOut = src.crs
                 traOut = src.transform
                 bBox = src.bounds
@@ -251,23 +260,101 @@ for year in [years[0]]:
                        'sur_refl_b04', 'sur_refl_b05','sur_refl_b06', 
                        'sur_refl_b07']:
                 data.append(tIn)
+                band_names.append(modDict.get(key).get('band'))
                 #print('data list appended')
                 #print(file)
             elif key in ['sur_refl_qc_500m']:
                 qc.append(tIn)
+                qc_names.append(modDict.get(key).get('band'))
                 #print('qc list appended')
                 #print(file)
             elif key in ['sur_refl_szen', 'sur_refl_vzen', 'sur_refl_raz']:
                 solar.append(tIn)
+                solar_names.append(modDict.get(key).get('band'))
                 #print('solar list appended')
                 #print(file)
             elif key in ['sur_refl_state_500m', 'sur_refl_day_of_year']:
                 state.append(tIn)
+                state_names.append(modDict.get(key).get('band'))
                 #print('state list appended')
                 #print(file)
+
+
+    # set geospatail coords manually for now; not sure how well this deals with 
+    #   Albers
+    iX = traOut[2] + traOut[0]/2
+    #fX = -66.4583333333286
+    #fX = iX * cols
+    
+    iY = traOut[5] + traOut[4]/2
+    #fY = 24.0416666666666
+    #fY = iY * rows
+    
+    xOff = traOut[0]
+    yOff = traOut[4]    
+    
+    # hard code for now. issue here is that transform function is returning
+    #   edges for, not actual pixel centers; which causing probles
+        #lons = np.arange(iX, fX, xOff, dtype='float32')
+        #lats = np.arange(iY, fY, yOff, dtype='float32')
+    x = [(iX + xOff * i) for i in range(0,cols)]
+    x = np.asarray(x)
+    y = [(iY + yOff * i) for i in range(0,rows)]
+    y = np.asarray(y)
+    
+    date = datetime.datetime.strptime(str(year)+str(day), "%Y%j")
+    
+    #dCube = ma.masked_array(data, fill_value = data[0].get_fill_value())
+    dCube = np.asarray(data).squeeze()       
+    cubeOut = xr.DataArray(dCube, 
+                           coords = {'bands' : band_names,
+                                     'y' : y,
+                                     'x' : x},
+                            dims = ['bands', 'y', 'x'])
     
     
+#    qcCube = ma.masked_array(qc, fill_value = qc[0].get_fill_value())  
+#    qcCube = np.asarray(qc).squeeze()
+    qcCube = np.asarray(qc[0])
+    qcOut =  xr.DataArray(qcCube, 
+                           coords = {'bands' : qc_names,
+                                     'y' : y,
+                                     'x' : x},
+                            dims = ['bands', 'y', 'x'])
     
+
+#    solCube = ma.masked_array(solar, fill_values = solar[0].get_fill_value())
+    solarCube = np.asarray(solar).squeeze()
+    solarOut =  xr.DataArray(solarCube, 
+                             coords = {'geom' : solar_names,
+                                       'y' : y,
+                                       'x' : x},
+                             dims = ['geom', 'y', 'x'])
+
+    
+#    stCube = ma.masked_array(state, fill_value = state[0].get_fill_value())
+    stCube = np.asarray(state).squeeze()
+    stateOut =  xr.DataArray(stCube, 
+                             coords = {'state' : state_names,
+                                       'y' : y,
+                                       'x' : x},
+                             dims = ['state', 'y', 'x'])
+
+    
+    mod09ga = xr.Dataset({'surf_ref' : cubeOut,
+                          'qc_500m' : qcOut,
+                          'view_geom' : solarOut,
+                          'state_doy' : stateOut})
+  
+    
+    
+    l8_surfref = xr.Dataset({'surf_ref': l8bands, 'qa': l8qa})
+
+
+
+
+
+    mergeOut = xr.concat(cubeOut, qcOut, solarOut, stateOut, dim=['y','x'])
     
     
     b1Files = sorted(glob.glob(iDir+fPre+b1p+str(year)+fPst))
