@@ -61,34 +61,33 @@ mask_out = mask_in
 #mask_out = -9999
 
 # set file band prefixes
-b1p = 'b01_doy'
-b2p = 'b02_doy'
-b3p = 'b03_doy'
-b4p = 'b04_doy'
-b5p = 'b05_doy'
-b6p = 'b06_doy'
-b7p = 'b07_doy'
+#b1p = 'b01_doy'
+#b2p = 'b02_doy'
+#b3p = 'b03_doy'
+#b4p = 'b04_doy'
+#b5p = 'b05_doy'
+#b6p = 'b06_doy'
+#b7p = 'b07_doy'
 
 # set loading matrices
-ldBright = [0.4395, 0.5945, 0.2460, 0.3918, 0.3506, 0.2136, 0.2678]
-ldGreen =[-0.4064, 0.5129, -0.2744, -0.2893, 0.4882, -0.0036, -0.4169]
-ldWet = [0.1147, 0.2489, 0.2408, 0.3132, -0.3122, -0.6416, -0.5087]
+#ldBright = [0.4395, 0.5945, 0.2460, 0.3918, 0.3506, 0.2136, 0.2678]
+#ldGreen =[-0.4064, 0.5129, -0.2744, -0.2893, 0.4882, -0.0036, -0.4169]
+#ldWet = [0.1147, 0.2489, 0.2408, 0.3132, -0.3122, -0.6416, -0.5087]
 
 # set dimensions of images
 r = 6542
 c = 8514 
 
 
-modDict = {'sur_refl_b01' : {'band':'red',
+m09a1BandDict = {'sur_refl_b01' : {'band':'red',
                              'band_long' : '500m Surface Reflectance Band 1 (620-670 nm)',
                              'band_number' : 1,
                              'units' : 'Reflectance',
                              'band_pass' : '620 - 670 nm',
                              'fill_value' : -28672,
                              'scale_factor' : 0.0001,
-                             'valid_range' : {'min':-100,
-                                              'max':16000}
-                             },
+                             'valid_range_min':-100,
+                             'valid_range_max':16000},
            'sur_refl_b02' : {'band' : 'nir',
                              'band_long' : '500m Surface Reflectance Band 2 (841-876 nm)',
                              'band_number' : 2,
@@ -96,9 +95,8 @@ modDict = {'sur_refl_b01' : {'band':'red',
                              'band_pass' : '841 - 876 nm',
                              'fill_value' : -28672,
                              'scale_factor' : 0.0001,
-                             'valid_range' : {'min':-100,
-                                              'max':16000}
-                             },
+                             'valid_range_min':-100,
+                             'valid_range_max':16000},
            'sur_refl_b03' : {'band' : 'blue',
                              'band_long' : '500m Surface Reflectance Band 3 (459-479 nm)',
                              'band_number' : 3,
@@ -106,9 +104,8 @@ modDict = {'sur_refl_b01' : {'band':'red',
                              'band_pass' : '459 - 479 nm',
                              'fill_value' : -28672,
                              'scale_factor' : 0.0001,
-                             'valid_range' : {'min':-100,
-                                             'max':16000}
-                             },
+                             'valid_range_min':-100,
+                             'valid_range_max':16000},
            'sur_refl_b04' : {'band' : 'green',
                             'band_long' : '500m Surface Reflectance Band 4 (545-565 nm)',
                             'band_number' : 4,
@@ -116,9 +113,8 @@ modDict = {'sur_refl_b01' : {'band':'red',
                             'band_pass' : '545 - 565 nm',
                             'fill_value' : -28672,
                             'scale_factor' : 0.0001,
-                            'valid_range' : {'min':-100,
-                                             'max':16000}
-                            },
+                            'valid_range_min':-100,
+                            'valid_range_max':16000},
            'sur_refl_b05' : {'band' : 'nir2',
                             'band_long' : 'Near-Infrared (1230-1250 nm)',
                             'band_number' : 5,
@@ -126,9 +122,8 @@ modDict = {'sur_refl_b01' : {'band':'red',
                             'band_pass' : '1230 - 1250 nm',
                             'fill_value' : -28672,
                             'scale_factor' : 0.0001,
-                            'valid_range' : {'min':-100,
-                                             'max':16000}
-                            },                  
+                            'valid_range_min':-100,
+                            'valid_range_max':16000},                  
            'sur_refl_b06' : {'band' : 'swir1',
                             'band_long' : 'Shortwave-Infrared (1628-1652 nm)',
                             'band_number' : 6,
@@ -136,9 +131,8 @@ modDict = {'sur_refl_b01' : {'band':'red',
                             'band_pass' : '1628 - 1652 nm',
                             'fill_value' : -28672,
                             'scale_factor' : 0.0001,
-                            'valid_range' : {'min':-100,
-                                             'max':16000}
-                            },
+                            'valid_range_min':-100,
+                            'valid_range_max':16000},
            'sur_refl_b07' : {'band' : 'swir2',
                             'band_long' : 'Shortwave-Infrared (2105-2155 nm)',
                             'band_number' : 7,
@@ -146,70 +140,93 @@ modDict = {'sur_refl_b01' : {'band':'red',
                             'band_pass' : '2105 - 2155 nm',
                             'fill_value' : -28672,
                             'scale_factor' : 0.0001,
-                            'valid_range' : {'min':-100,
-                                             'max':16000}
-                            },
-           'sur_refl_qc_500m' : {'band' : 'QA',
-                                 'band_long' : 'Qualtiy Assurance',
+                            'valid_range_min':-100,
+                            'valid_range_max':16000},
+           'sur_refl_qc_500m' : {'band' : 'QC',
+                                 'band_long' : 'Reflectance Band Quality',
                                  'band_number' : 7,
                                  'units' : 'Bit Field',
                                  'band_pass' : '2105 - 2155 nm',
                                  'fill_value' : 4294967295,
-                                 'scale_factor' : None,
-                                 'valid_range' : {'min':None,
-                                                  'max':None}
-                            },
+                                 'scale_factor' : 'NA',
+                                 'valid_range_min':'NA',
+                                 'valid_range_max':'NA'},
            'sur_refl_szen' : {'band' : 'szen',
                               'band_long' : 'Solar Zenith Angle',
-                              'band_number' : None,
+                              'band_number' : 'NA',
                               'units' : 'Degree',
                               'band_pass' : '2105 - 2155 nm',
                               'fill_value' : 0,
                               'scale_factor' : 0.01,
-                              'valid_range' : {'min':0,
-                                             'max':18000}
-                              },
+                              'valid_range_min':0,
+                              'valid_range_max':18000},
            'sur_refl_vzen' : {'band' : 'vzen',
                               'band_long' : 'View Zenith Angle',
-                              'band_number' : None,
+                              'band_number' : 'NA',
                               'units' : 'Degree',
-                              'band_pass' : None,
+                              'band_pass' : 'NA',
                               'fill_value' : 0,
                               'scale_factor' : 0.01,
-                              'valid_range' : {'min':0,'max':18000}
-                              },
+                              'valid_range_min':0,
+                              'valid_range_max':18000},
            'sur_refl_raz' : {'band' : 'vzen',
                              'band_long' : 'Relative Azimuth Angle',
-                             'band_number' : None,
+                             'band_number' : 'NA',
                              'units' : 'Degree',
-                             'band_pass' : None,
+                             'band_pass' : 'NA',
                              'fill_value' : 0,
                              'scale_factor' : 0.01,
-                             'valid_range' : {'min':-18000,
-                                             'max':18000}
-                             },
+                             'valid_range_min':-18000,
+                             'valid_range_max':18000},
            'sur_refl_state_500m' : {'band' : 'state',
                                     'band_long' : '500m State Flags',
-                                    'band_number' : None,
+                                    'band_number' : 'NA',
                                     'units' : 'Bit Field',
-                                    'band_pass' : None,
+                                    'band_pass' : 'NA',
                                     'fill_value' : 65535,
                                     'scale_factor' : 0.01,
-                                    'valid_range' : {'min':0,
-                                                     'max':18000}
-                                    },
+                                    'valid_range_min':0,
+                                    'valid_range_max':18000},
            'sur_refl_day_of_year' : {'band' : 'doy',
                                     'band_long' : 'Julian Day',
-                                    'band_number' : None,
+                                    'band_number' : 'NA',
                                     'units' : 'Day of Year',
-                                    'band_pass' : None,
+                                    'band_pass' : 'NA;',
                                     'fill_value' : 65535,
-                                    'scale_factor' : 0.01,
-                                    'valid_range' : {'min':1,
-                                                     'max':366}
-                                    }
+                                    'scale_factor' : 'NA',
+                                    'valid_range_min':1,
+                                    'valid_range_max':366}
         }
-           
+
+# dicotnoary for building metadata for these data.
+mod09a1DSDict = {'surf_ref' : {'long_name' : '500m Surface Reflectance',
+                               'units' : 'Reflectance',
+                               '_FillValue' : -28672,
+                               'scale_factor' : 0.0001,
+                               'valid_range_min' : -100,
+                               'valid_range_max':16000},
+                'qc_500m' : {'long_name' : 'Reflectance Band Quality',
+                              'units' : 'Bit Field',
+                              '_FillValue' : 4294967295},
+                'view_geom' : {'long_name' : 'Sensor Viewing Geometry',
+                               'units' : 'Degree',
+                               '_FillValue' : 0,
+                               'scale_factor' : 0.01,
+                               'valid_range_min' :0,
+                               'valid_range_max': 18000,
+                               'valid_range_relative_min' :-18000},
+                'state' : {'long_name' : '500m State Flags',
+                           'units' : 'Bit Field',
+                           '_FillValue' : 65535,
+                           'scale_factor' : 1,},
+                'doy' : {'long_name' : 'Julian Day',
+                         'units' : 'Day of Year',
+                         '_FillValue' : 65535,
+                         'valid_range_min' : 1,
+                         'valid_range_max' : 366}
+                }      
+
+     
 years = range(2000,2018)
 days = [185, 193, 201, 209, 217, 225, 233, 241]
 
@@ -233,19 +250,23 @@ for year in [years[0]]:
         qc=[]
         solar=[]
         state=[]
+        doy = []
+        
         band_names=[]
         qc_names=[]
-        state_names=[]
         solar_names=[]
+        state_names=[]
+        doy_names=[]
+
         #files = sorted(glob.glob(iDir+fPre+str(year)+str(day)+fPst))
-        for key in [*modDict]:
+        for key in [*m09a1BandDict]:
             file = glob.glob(iDir+fPre+str(key)+dPre+str(year)+str(day)+fPst)
             #file = glob.glob(fPre+str(key)+dPre+str(year)+str(day)+fPst)
             #print(file)
             print(key)
             
             #with rasterio.open(file, driver="GTiff") as src:
-            #ndv = modDict.get(key).get('fill_value')
+            #ndv = m09a1BandDict.get(key).get('fill_value')
             with rasterio.open(file[0], driver='GTiff') as src:
                 #tIn = src.read(1, masked=True)
                 tIn = src.read()
@@ -260,24 +281,27 @@ for year in [years[0]]:
                        'sur_refl_b04', 'sur_refl_b05','sur_refl_b06', 
                        'sur_refl_b07']:
                 data.append(tIn)
-                band_names.append(modDict.get(key).get('band'))
+                band_names.append(m09a1BandDict.get(key).get('band'))
                 #print('data list appended')
                 #print(file)
             elif key in ['sur_refl_qc_500m']:
                 qc.append(tIn)
-                qc_names.append(modDict.get(key).get('band'))
+                qc_names.append(m09a1BandDict.get(key).get('band'))
                 #print('qc list appended')
                 #print(file)
             elif key in ['sur_refl_szen', 'sur_refl_vzen', 'sur_refl_raz']:
                 solar.append(tIn)
-                solar_names.append(modDict.get(key).get('band'))
+                solar_names.append(m09a1BandDict.get(key).get('band'))
                 #print('solar list appended')
                 #print(file)
-            elif key in ['sur_refl_state_500m', 'sur_refl_day_of_year']:
+            elif key in ['sur_refl_state_500m']:
                 state.append(tIn)
-                state_names.append(modDict.get(key).get('band'))
+                state_names.append(m09a1BandDict.get(key).get('band'))
                 #print('state list appended')
                 #print(file)
+            elif key in ['sur_refl_day_of_year']:
+                doy.append(tIn)
+                doy_names.append(m09a1BandDict.get(key).get('band'))
 
 
     # set geospatail coords manually for now; not sure how well this deals with 
@@ -317,10 +341,10 @@ for year in [years[0]]:
 #    qcCube = np.asarray(qc).squeeze()
     qcCube = np.asarray(qc[0])
     qcOut =  xr.DataArray(qcCube, 
-                           coords = {'bands' : qc_names,
+                           coords = {'qc' : qc_names,
                                      'y' : y,
                                      'x' : x},
-                            dims = ['bands', 'y', 'x'])
+                            dims = ['qc', 'y', 'x'])
     
 
 #    solCube = ma.masked_array(solar, fill_values = solar[0].get_fill_value())
@@ -333,29 +357,160 @@ for year in [years[0]]:
 
     
 #    stCube = ma.masked_array(state, fill_value = state[0].get_fill_value())
-    stCube = np.asarray(state).squeeze()
+    stCube = np.asarray(state[0])
     stateOut =  xr.DataArray(stCube, 
                              coords = {'state' : state_names,
                                        'y' : y,
                                        'x' : x},
                              dims = ['state', 'y', 'x'])
 
-    
-    mod09ga = xr.Dataset({'surf_ref' : cubeOut,
+    doyCube = np.asarray(doy[0])
+    doyOut = xr.DataArray(doyCube, 
+                             coords = {'doy' : doy_names,
+                                       'y' : y,
+                                       'x' : x},
+                             dims = ['doy', 'y', 'x'])
+
+    # make the data arrays into an xarray dataset
+    mod09a1 = xr.Dataset({'surf_ref' : cubeOut,
                           'qc_500m' : qcOut,
                           'view_geom' : solarOut,
-                          'state_doy' : stateOut})
+                          'state_500m' : stateOut,
+                          'doy_500m' : doyOut})
   
+#    plt.figure()
+#    ndvi = (mod09ga['surf_ref'].sel(bands='nir') - mod09ga['surf_ref'].sel(bands='red')) / \
+#    (mod09ga['surf_ref'].sel(bands='nir') + mod09ga['surf_ref'].sel(bands='red'))
+#    plt.figure()
+#    plt.imshow(ndvi)
+#    qa_ndvi = xr.where(ndvi != 0,
+#                   ndvi,
+#                   np.nan)
+#    plt.imshow(qa_ndvi, vmin=-1, vmax=1, cmap='gist_heat')
+
+# metadata for these datasets
+    mod09a1.attrs['title'] = str('MODIS Terra Surface Reflectance 8-Day L3 Global 500 m, Collecton 6')
+    mod09a1.attrs['keywords'] = str('MODIS, Remote Sensing, Arctic, Surface Reflectance' )
+    mod09a1.attrs['summary'] = str('''MOD09A1 is Level 3, 8-day composite build from daily MODIS band 1-7 surface reflectance observations.''')
+
+    mod09a1.attrs['publisher_name'] = 'NASA'
+    mod09a1.attrs['publisher_url'] = 'http://modis-sr.ltdri.org'
+    mod09a1.attrs['publisher_email'] ='mod09@ltdri.org'
+
+    mod09a1.attrs['time'] = str(date)
     
+    mod09a1.attrs['time_coverage_start'] = str(date)
+    mod09a1.attrs['time_coverage_end'] = str(date + datetime.timedelta(days=7))
     
-    l8_surfref = xr.Dataset({'surf_ref': l8bands, 'qa': l8qa})
+    mod09a1.attrs['cdm_data_type'] = 'Grid'
 
+    for key in [*mod09a1DSDict]:
+        for k,v in mod09a1DSDict.get(key).items():
+            mod09a1[key].attrs[k] = v
+       
+    '''These need worked on: not sure how to do since these are utm/or albers_alaksa'''
+    '''These fields, especially geospatial_bounds_crs, requires an EPSG code format to 
+        work, that is lame. below are what they would be if the were in lat/lons;
+        from a gdalwarp reproject'''
+#    mod09a1.attrs['geospatial_bounds'] = str(extentCoords(x, y, xOff, yOff, ptype='center'))
+    mod09a1.attrs['geospatial_bounds'] = 'POLYGON ((-179.9999998 71.5869298, 179.9824586 71.5869298, 179.9824586 38.0891442, -179.9999998 38.0891442, -179.9999998 71.5869298))'
+    mod09a1.attrs['geospatial_bounds_crs'] = 'epsg:4326'
+    mod09a1.attrs['geospatial_lat_units'] = 'degrees_north'
+    mod09a1.attrs['geospatial_lon_units'] = 'degrees_east'
+    mod09a1.attrs['geospatial_lat_max'] = np.around(71.5869298, decimals=13)
+    mod09a1.attrs['geospatial_lat_min'] = np.around(38.0891442, decimals=13)    
+    mod09a1.attrs['geospatial_lon_max'] = np.around(179.9824586, decimals=13)  
+    mod09a1.attrs['geospatial_lon_min'] = np.around(-179.9999998, decimals=13)  
+    mod09a1.attrs['geospatial_lat_resolution'] = np.around(-0.027938103102464, decimals=14)  
+    mod09a1.attrs['geospatial_lon_resolution'] = np.around(0.027935935005064, decimals=14)
 
-
-
-
-    mergeOut = xr.concat(cubeOut, qcOut, solarOut, stateOut, dim=['y','x'])
     
+    # getting to xarray/NetCDF to recognized spatial ref infor is not 
+    #   immediately obvious. Crs needs setting as a coord, and then requires 
+    #   explicit linking to the PRISM dataset via the 'grid_mapping' attribute
+    ''' NEED defined and worked on: 
+        https://www.unidata.ucar.edu/software/thredds/v4.5/netcdf-java/reference/StandardCoordinateTransforms.html'''    
+    mod09a1.coords['crs'] = np.int32(0)
+#    mod09a1.coords['crs'] = 'srorg:8815'
+    mod09a1.coords['crs'].attrs['grid_mapping'] = 'Projection'
+    mod09a1.coords['crs'].attrs['grid_mapping_name'] = 'albers_conical_equal_area'
+#    mod09a1.coords['crs'].attrs['standard_parallel'] = [55. , 65.] 
+#    mod09a1.coords['crs'].attrs['standard_parallel'] = np.array([55., 65.])
+    mod09a1.coords['crs'].attrs['standard_parallel_1'] = 55.
+    mod09a1.coords['crs'].attrs['standard_parallel_2'] = 65.
+    mod09a1.coords['crs'].attrs['longitude_of_central_meridian'] = -154.0
+    mod09a1.coords['crs'].attrs['latitude_of_projection_origin'] = 50.
+    mod09a1.coords['crs'].attrs['false_easting'] = 0.0
+    mod09a1.coords['crs'].attrs['false_northing'] = 0.0
+    mod09a1.coords['crs'].attrs['_CoordinateTransformType'] = 'Projection'
+    mod09a1.coords['crs'].attrs['_CoordinateAxisTypes'] = 'GeoX GeoY'
+    mod09a1.coords['crs'].attrs['long_name'] = 'WGS84 / Alaskan Albers'
+#    mod09a1.coords['crs'].attrs['semi_major_axis'] = 6378137.0
+#    mod09a1.coords['crs'].attrs['inverse_flattening'] = 298.257223563
+#    mod09a1.coords['crs'].attrs['crs_wkt'] = crsOut.wkt
+#    mod09a1.coords['crs'].attrs['spatial_ref'] = crsOut.wkt
+    mod09a1.coords['crs'].attrs['crs_wkt'] = crsOut.to_string()
+    mod09a1.coords['crs'].attrs['spatial_ref'] = crsOut.to_string()
+
+    mod09a1.coords['crs'].attrs['GeoTransform'] = traOut
+    mod09a1.coords['crs'].attrs['unit'] = 'metre'
+#    mod09a1.coords['crs'].attrs['crs_wkt'] = crsOut.wkt
+    
+    mod09a1['x'].attrs['standard_name'] = 'projection_x_coordinate'
+#    mod09a1['x'].attrs['grid_mapping'] = 'Projection'
+    mod09a1['x'].attrs['long_name']= 'x coordinate of projection'
+    mod09a1['x'].attrs['units'] = 'meters'
+    mod09a1['x'].attrs['_CoordinateAxisType'] =  'GeoX'
+
+    mod09a1['y'].attrs['standard_name'] = 'projection_y_coordinate'
+#    mod09a1['y'].attrs['grid_mapping'] = 'Projection'
+    mod09a1['y'].attrs['long_name']= 'y coordinate of projection'
+    mod09a1['y'].attrs['units'] = 'meters'
+    mod09a1['y'].attrs['_CoordinateAxisType'] =  'GeoY'    
+    # do the metadata for the individual data arrays, do using dicts
+
+    mod09a1['surf_ref'].attrs['grid_mapping'] = 'crs'
+    mod09a1['qc_500m'].attrs['grid_mapping'] = 'crs'
+    mod09a1['view_geom'].attrs['grid_mapping'] = 'crs'
+    mod09a1['state_500m'].attrs['grid_mapping'] = 'crs'
+    mod09a1['state_500m'].attrs['grid_mapping'] = 'crs'
+    
+    mod09a1.attrs['grid_mapping'] = 'crs'
+
+#if (w==True):
+    print('writing NetCDF of Prism %s datacube for: %i ' %(year, day))
+    #print('path is:', oPath + prism + '/' + oPre + str(year) + '.nc' +'\n' )
+    mod09a1.to_netcdf(oDir + 'MOD09a1_' + str(year) + '_' + str(day) + '.nc',
+                     mode='w',
+                     format='NETCDF4',
+                     unlimited_dims='time',
+                     encoding={'surf_ref':{'zlib': True, 'complevel': 9},
+                               'qc_500m':{'zlib': True, 'complevel': 9},
+                               'view_geom':{'zlib': True, 'complevel': 9},
+                               'state_500m':{'zlib': True, 'complevel': 9},
+                               'doy_500m':{'zlib': True, 'complevel': 9}})
+    
+
+
+def extentCoords(lons, lats, xOff=0., yOff = 0., ptype='edge'):
+    '''Function to calculate extent from lon & lat vectors. ptype used to 
+    indicate if points are center of pixels, or upper left coners'''
+    from shapely.geometry import box
+    # minx = lons[0], miny=lats[-1], maxx=;ons[-1], maxy=lats[0] for clock-wise
+    #   bounding box
+    #mod this for centers/vs edges eventually?
+    if ((ptype == 'center') & (xOff == 0.)):
+        print('pixel type is center but offsets not provided')
+        return()
+    elif(ptype == 'edge'):
+        bbox = box(lons[0], lats[-1], lons[-1], lats[0], ccw=False)
+    elif (ptype == 'center'):
+        xOff = np.around(lons[1] - lons[0], decimals=14)
+        yOff = np.around(lats[1] - lats[0],decimals=14)        
+        bbox = box(lons[0] - xOff/2, lats[-1] + yOff/2, 
+                   lons[-1] + xOff/2, lats[0] - yOff/2, ccw=False)
+    return(bbox)
+
     
     b1Files = sorted(glob.glob(iDir+fPre+b1p+str(year)+fPst))
     b2Files = sorted(glob.glob(iDir+fPre+b2p+str(year)+fPst))
@@ -540,6 +695,26 @@ for year in [years[0]]:
 #plt.imshow(b1.squeeze())
 #t = np.array(l)
 """
+
+def extentCoords(lons, lats, xOff=0., yOff = 0., ptype='edge'):
+    '''Function to calculate extent from lon & lat vectors. ptype used to 
+    indicate if points are center of pixels, or upper left coners'''
+    from shapely.geometry import box
+    # minx = lons[0], miny=lats[-1], maxx=;ons[-1], maxy=lats[0] for clock-wise
+    #   bounding box
+    #mod this for centers/vs edges eventually?
+    if ((ptype == 'center') & (xOff == 0.)):
+        print('pixel type is center but offsets not provided')
+        return()
+    elif(ptype == 'edge'):
+        bbox = box(lons[0], lats[-1], lons[-1], lats[0], ccw=False)
+    elif (ptype == 'center'):
+        xOff = np.around(lons[1] - lons[0], decimals=14)
+        yOff = np.around(lats[1] - lats[0],decimals=14)        
+        bbox = box(lons[0] - xOff/2, lats[-1] + yOff/2, 
+                   lons[-1] + xOff/2, lats[0] - yOff/2, ccw=False)
+    return(bbox)
+ 
 
 #[sTime, sClock] = time.time(),time.clock() 
 #b1med = np.median(b1,axis=0)
