@@ -435,9 +435,9 @@ for year in [years[0]]:
     mod09a1.coords['crs'].attrs['grid_mapping'] = 'Projection'
     mod09a1.coords['crs'].attrs['grid_mapping_name'] = 'albers_conical_equal_area'
 #    mod09a1.coords['crs'].attrs['standard_parallel'] = [55. , 65.] 
-#    mod09a1.coords['crs'].attrs['standard_parallel'] = np.array([55., 65.])
-    mod09a1.coords['crs'].attrs['standard_parallel_1'] = 55.
-    mod09a1.coords['crs'].attrs['standard_parallel_2'] = 65.
+    mod09a1.coords['crs'].attrs['standard_parallel'] = np.array([55., 65.])
+#    mod09a1.coords['crs'].attrs['standard_parallel_1'] = 55.
+#    mod09a1.coords['crs'].attrs['standard_parallel_2'] = 65.
     mod09a1.coords['crs'].attrs['longitude_of_central_meridian'] = -154.0
     mod09a1.coords['crs'].attrs['latitude_of_projection_origin'] = 50.
     mod09a1.coords['crs'].attrs['false_easting'] = 0.0
@@ -476,6 +476,8 @@ for year in [years[0]]:
     mod09a1['state_500m'].attrs['grid_mapping'] = 'crs'
     
     mod09a1.attrs['grid_mapping'] = 'crs'
+#    mod09a1.coords['x'] = 'projection_x_coordinate'
+#    mod09a1.coords['y'] = 'projection_y_coordinate'
 
 #if (w==True):
     print('writing NetCDF of Prism %s datacube for: %i ' %(year, day))
