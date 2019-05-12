@@ -201,31 +201,30 @@ m09a1BandDict = {'sur_refl_b01' : {'band':'red',
 # dicotnoary for building metadata for these data.
 mod09a1DSDict = {'surf_ref' : {'long_name' : '500m Surface Reflectance',
                                'units' : 'Reflectance',
-                               '_FillValue' : -28672,
+#                               '_FillValue' : np.array([-28672], dtype=np.int16),
+                               'fill_value' : np.array([-28672], dtype=np.int16),
                                'scale_factor' : 0.0001,
-                               'valid_range_min' : -100,
-                               'valid_range_max':16000},
+                               'valid_range_min' : np.array([-100, 16000])},
                 'qc_500m' : {'long_name' : 'Reflectance Band Quality',
                               'units' : 'Bit Field',
-                              '_FillValue' : 4294967295},
+#                              '_FillValue' : np.array([4294967295], dtype=np.uint32)},
+                              'fill_value' : np.array([4294967295], dtype=np.uint32)},
                 'view_geom' : {'long_name' : 'Sensor Viewing Geometry',
                                'units' : 'Degree',
-                               '_FillValue' : 0,
+#                               '_FillValue' : np.array([0], dtype=np.int16),
+                               'fill_value' : np.array([0], dtype=np.int16),
                                'scale_factor' : 0.01,
-                               'valid_range_min' :0,
-                               'valid_range_max': 18000,
-                               'valid_range_relative_min' :-18000},
+                               'valid_range' : np.array([-18000, 18000])},
                 'state' : {'long_name' : '500m State Flags',
                            'units' : 'Bit Field',
-                           '_FillValue' : 65535,
-                           'scale_factor' : 1,},
+#                           '_FillValue' : np.array([65535], dtype=np.uint16)},
+                           'fill_value' : np.array([65535], dtype=np.uint16)},
                 'doy' : {'long_name' : 'Julian Day',
                          'units' : 'Day of Year',
-                         '_FillValue' : 65535,
-                         'valid_range_min' : 1,
-                         'valid_range_max' : 366}
-                }      
-
+#                         '_FillValue' : np.array([65535], dtype=np.uint16),
+                         'fill_value' : np.array([65535], dtype=np.uint16),
+                         'valid_range' : np.array([1,366])}
+                } 
      
 years = range(2000,2018)
 days = [185, 193, 201, 209, 217, 225, 233, 241]
@@ -376,7 +375,10 @@ for year in [years[0]]:
                           'qc_500m' : qcOut,
                           'view_geom' : solarOut,
                           'state_500m' : stateOut,
-                          'doy_500m' : doyOut})
+                          'doy_500m' : doyOut,
+                          'time':date})
+
+    sr_out = xr.Dataset({'surf_ref': cubeOut})
   
 #    plt.figure()
 #    ndvi = (mod09ga['surf_ref'].sel(bands='nir') - mod09ga['surf_ref'].sel(bands='red')) / \
@@ -430,11 +432,16 @@ for year in [years[0]]:
     #   explicit linking to the PRISM dataset via the 'grid_mapping' attribute
     ''' NEED defined and worked on: 
         https://www.unidata.ucar.edu/software/thredds/v4.5/netcdf-java/reference/StandardCoordinateTransforms.html'''    
+
     mod09a1.coords['crs'] = np.int32(0)
+#    mod09a1.coords['_CoordinateAxes'] = 'bands qc geom state doy y x'
+#    mod09a1.coords['_CoordinateTransforms'] = 'AlbersAlaskaWGS84Projection'
+#    mod09a1.coords['_CoordinateTransforms'] = 'crs'
 #    mod09a1.coords['crs'] = 'srorg:8815'
-    mod09a1.coords['crs'].attrs['grid_mapping'] = 'Projection'
+#    mod09a1.coords['crs'].attrs['grid_mapping'] = 'Projection'
     mod09a1.coords['crs'].attrs['grid_mapping_name'] = 'albers_conical_equal_area'
-#    mod09a1.coords['crs'].attrs['standard_parallel'] = [55. , 65.] 
+    mod09a1.coords['crs'].attrs['projected_coordinate_system_name'] = 'albers_conical_equal_area'
+#    mod09a1.coords['crs'].attrs['standard_parallel'] = '55.0,  65.0' 
     mod09a1.coords['crs'].attrs['standard_parallel'] = np.array([55., 65.])
 #    mod09a1.coords['crs'].attrs['standard_parallel_1'] = 55.
 #    mod09a1.coords['crs'].attrs['standard_parallel_2'] = 65.
@@ -445,30 +452,53 @@ for year in [years[0]]:
     mod09a1.coords['crs'].attrs['_CoordinateTransformType'] = 'Projection'
     mod09a1.coords['crs'].attrs['_CoordinateAxisTypes'] = 'GeoX GeoY'
     mod09a1.coords['crs'].attrs['long_name'] = 'WGS84 / Alaskan Albers'
+    mod09a1.coords['crs'].attrs['semi_major_axis'] = 6378137.0
+    mod09a1.coords['crs'].attrs['semi_minor_axis'] = 6356752.314245
+    mod09a1.coords['crs'].attrs['inverse_flattening'] = 298.257223563
 #    mod09a1.coords['crs'].attrs['semi_major_axis'] = 6378137.0
-#    mod09a1.coords['crs'].attrs['inverse_flattening'] = 298.257223563
-#    mod09a1.coords['crs'].attrs['crs_wkt'] = crsOut.wkt
-#    mod09a1.coords['crs'].attrs['spatial_ref'] = crsOut.wkt
+#    mod09a1.coords['crs'].attrs['semi_minor_axis'] = 6356752.314140356
+#    mod09a1.coords['crs'].attrs['inverse_flattening'] = 298.257222101
+##    mod09a1.coords['crs'].attrs['crs_wkt'] = crsOut.wkt
+##    mod09a1.coords['crs'].attrs['spatial_ref'] = crsOut.wkt
     mod09a1.coords['crs'].attrs['crs_wkt'] = crsOut.to_string()
     mod09a1.coords['crs'].attrs['spatial_ref'] = crsOut.to_string()
+#
+#    mod09a1.coords['crs'].attrs['GeoTransform'] = traOut
+##    mod09a1.coords['crs'].attrs['unit'] = 'metre'
+##    mod09a1.coords['crs'].attrs['crs_wkt'] = crsOut.wkt
 
-    mod09a1.coords['crs'].attrs['GeoTransform'] = traOut
-    mod09a1.coords['crs'].attrs['unit'] = 'metre'
-#    mod09a1.coords['crs'].attrs['crs_wkt'] = crsOut.wkt
+    # going to try specifing things a different way
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'] = np.int32(0)
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['standard_parallel'] = np.array([55., 65.])
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['longitude_of_central_meridian'] = -154.0
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['latitude_of_projection_origin'] = 50.
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['false_easting'] = 0.0
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['false_northing'] = 0.0
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['_CoordinateTransformType'] = 'Projection'
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['_CoordinateAxisTypes'] = 'GeoX GeoY'
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['long_name'] = 'WGS84 / Alaskan Albers'
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['crs_wkt'] = crsOut.to_string()
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['spatial_ref'] = crsOut.to_string()
+#    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['GeoTransform'] = traOut
     
     mod09a1['x'].attrs['standard_name'] = 'projection_x_coordinate'
-#    mod09a1['x'].attrs['grid_mapping'] = 'Projection'
+#    mod09a1['x'].attrs['grid_mapping'] = 'crs'
     mod09a1['x'].attrs['long_name']= 'x coordinate of projection'
     mod09a1['x'].attrs['units'] = 'meters'
     mod09a1['x'].attrs['_CoordinateAxisType'] =  'GeoX'
+#    mod09a1['x'].attrs['_CoordinateTransform'] =  'Projection'
 
     mod09a1['y'].attrs['standard_name'] = 'projection_y_coordinate'
-#    mod09a1['y'].attrs['grid_mapping'] = 'Projection'
+#    mod09a1['y'].attrs['grid_mapping'] = 'crs'
     mod09a1['y'].attrs['long_name']= 'y coordinate of projection'
     mod09a1['y'].attrs['units'] = 'meters'
     mod09a1['y'].attrs['_CoordinateAxisType'] =  'GeoY'    
+#    mod09a1['y'].attrs['_CoordinateTransform'] =  'Projection'
     # do the metadata for the individual data arrays, do using dicts
 
+    mod09a1['time'].attrs['_CoordinateAxisType']='Time'
+    #mod09a1.encoding['unlimited_dims']='time'
+    
     mod09a1['surf_ref'].attrs['grid_mapping'] = 'crs'
     mod09a1['qc_500m'].attrs['grid_mapping'] = 'crs'
     mod09a1['view_geom'].attrs['grid_mapping'] = 'crs'
@@ -476,6 +506,52 @@ for year in [years[0]]:
     mod09a1['state_500m'].attrs['grid_mapping'] = 'crs'
     
     mod09a1.attrs['grid_mapping'] = 'crs'
+    mod09a1.attrs['crs_wkt'] = crsOut.to_string()
+    mod09a1.attrs['spatial_ref'] = crsOut.to_string()
+
+    mod09a1.coords['time']=date
+    mod09a1.coords['y']=('y', y)
+    mod09a1.coords['x']=('x', x)
+    
+    
+#    mod09a1['surf_ref'].attrs['_CoordinateSystems'] = 'AlbersAlaskaWGS84Projection'
+#    mod09a1['qc_500m'].attrs['_CoordinateSystems'] = 'AlbersAlaskaWGS84Projection'
+#    mod09a1['view_geom'].attrs['_CoordinateSystems'] = 'AlbersAlaskaWGS84Projection'
+#    mod09a1['state_500m'].attrs['_CoordinateSystems'] = 'AlbersAlaskaWGS84Projection'
+#    mod09a1['state_500m'].attrs['_CoordinateSystems'] = 'AlbersAlaskaWGS84Projection'
+#    
+#    mod09a1.attrs['grid_mapping'] = 'AlbersAlaskaWGS84Projection'
+
+#    sr_out.coords['crs'] = np.int32(0)
+#    sr_out.coords['_CoordinateAxes'] = 'bands qc geom state doy y x'
+#    sr_out.coords['_CoordinateTransforms'] = 'AlbersAlaskaWGS84Projection'
+#    sr_out.coords['AlbersAlaskaWGS84Projection'] = np.int32(0)
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['standard_parallel'] = np.array([55., 65.])
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['longitude_of_central_meridian'] = -154.0
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['latitude_of_projection_origin'] = 50.
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['false_easting'] = 0.0
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['false_northing'] = 0.0
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['_CoordinateTransformType'] = 'Projection'
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['_CoordinateAxisTypes'] = 'GeoX GeoY'
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['long_name'] = 'WGS84 / Alaskan Albers'
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['crs_wkt'] = crsOut.to_string()
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['spatial_ref'] = crsOut.to_string()
+#    sr_out.coords['AlbersAlaskaWGS84Projection'].attrs['GeoTransform'] = traOut
+#    sr_out['x'].attrs['standard_name'] = 'projection_x_coordinate'
+##    mod09a1['x'].attrs['grid_mapping'] = 'Projection'
+#    sr_out['x'].attrs['long_name']= 'x coordinate of projection'
+#    sr_out['x'].attrs['units'] = 'meters'
+#    sr_out['x'].attrs['_CoordinateAxisType'] =  'GeoX'
+#
+#    sr_out['y'].attrs['standard_name'] = 'projection_y_coordinate'
+##    mod09a1['y'].attrs['grid_mapping'] = 'Projection'
+#    sr_out['y'].attrs['long_name']= 'y coordinate of projection'
+#    sr_out['y'].attrs['units'] = 'meters'
+#    sr_out['y'].attrs['_CoordinateAxisType'] =  'GeoY' 
+#
+#    for k,v in mod09a1DSDict.get('surf_ref').items():
+#        sr_out.attrs[k] = v
+
 #    mod09a1.coords['x'] = 'projection_x_coordinate'
 #    mod09a1.coords['y'] = 'projection_y_coordinate'
 
@@ -490,8 +566,16 @@ for year in [years[0]]:
                                'qc_500m':{'zlib': True, 'complevel': 9},
                                'view_geom':{'zlib': True, 'complevel': 9},
                                'state_500m':{'zlib': True, 'complevel': 9},
-                               'doy_500m':{'zlib': True, 'complevel': 9}})
+                               'doy_500m':{'zlib': True, 'complevel': 9},
+                               'time':{'zlib': True, 'complevel': 9}})
     
+
+#    mod09a1.to_netcdf(oDir + 'MOD09a1_bands' + str(year) + '_' + str(day) + '.nc',
+#                     mode='w',
+#                     format='NETCDF4',
+#                     unlimited_dims='time',
+#                     encoding={'surf_ref':{'zlib': True, 'complevel': 9}})
+#
 
 
 def extentCoords(lons, lats, xOff=0., yOff = 0., ptype='edge'):
