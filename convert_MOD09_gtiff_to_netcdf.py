@@ -78,7 +78,19 @@ mask_out = mask_in
 r = 6542
 c = 8514 
 
-
+#########
+#
+# this dict holds the metadata as per NASA documentation.
+#   is most of the important stuff for using the data
+#
+#   note: Not sure if xarray does autoscaling of the data, but some
+#       but there are suggestions that some NetCDF readers should do that
+#       using the values stored in scale_factor
+#
+#   here, values are basically bands 1-7, with QA, Solar View angles, QA and 
+#       State Variables, and one for Day Of Year
+#   
+#########
 m09a1BandDict = {'sur_refl_b01' : {'band':'red',
                              'band_long' : '500m Surface Reflectance Band 1 (620-670 nm)',
                              'band_number' : 1,
@@ -198,7 +210,8 @@ m09a1BandDict = {'sur_refl_b01' : {'band':'red',
                                     'valid_range_max':366}
         }
 
-# dicotnoary for building metadata for these data.
+# dict for building metadata for these data
+# is for the top level of xarray.... probably a better way to do this.
 mod09a1DSDict = {'surf_ref' : {'long_name' : '500m Surface Reflectance',
                                'units' : 'Reflectance',
 #                               '_FillValue' : np.array([-28672], dtype=np.int16),
@@ -225,7 +238,8 @@ mod09a1DSDict = {'surf_ref' : {'long_name' : '500m Surface Reflectance',
                          'fill_value' : np.array([65535], dtype=np.uint16),
                          'valid_range' : np.array([1,366])}
                 } 
-     
+
+# variables for processing through the data serially
 years = range(2000,2018)
 days = [185, 193, 201, 209, 217, 225, 233, 241]
 
@@ -325,8 +339,13 @@ for year in [years[0]]:
     y = [(iY + yOff * i) for i in range(0,rows)]
     y = np.asarray(y)
     
+    # set the date string for the metadata
     date = datetime.datetime.strptime(str(year)+str(day), "%Y%j")
     
+    # create the indiviudal DataArrays that make up the final DataSet
+    #   essentially, get one dataset per calendear year, each one comprised
+    #   of the composited remotely sensed observations for 8, 8-day periods
+    #
     #dCube = ma.masked_array(data, fill_value = data[0].get_fill_value())
     dCube = np.asarray(data).squeeze()       
     cubeOut = xr.DataArray(dCube, 
@@ -390,7 +409,13 @@ for year in [years[0]]:
 #                   np.nan)
 #    plt.imshow(qa_ndvi, vmin=-1, vmax=1, cmap='gist_heat')
 
+#########
+#
 # metadata for these datasets
+#
+#########
+
+# frist, top pevel metadata
     mod09a1.attrs['title'] = str('MODIS Terra Surface Reflectance 8-Day L3 Global 500 m, Collecton 6')
     mod09a1.attrs['keywords'] = str('MODIS, Remote Sensing, Arctic, Surface Reflectance' )
     mod09a1.attrs['summary'] = str('''MOD09A1 is Level 3, 8-day composite build from daily MODIS band 1-7 surface reflectance observations.''')
@@ -406,10 +431,15 @@ for year in [years[0]]:
     
     mod09a1.attrs['cdm_data_type'] = 'Grid'
 
+    # do metadata for each of the bands/qa
     for key in [*mod09a1DSDict]:
         for k,v in mod09a1DSDict.get(key).items():
             mod09a1[key].attrs[k] = v
-       
+    
+    
+    # this bit is used to make the data searchable if the are ever posted/hosted.
+    #   they are NOT the CRS type information needed to enable gdal etc to use the data
+    # 
     '''These need worked on: not sure how to do since these are utm/or albers_alaksa'''
     '''These fields, especially geospatial_bounds_crs, requires an EPSG code format to 
         work, that is lame. below are what they would be if the were in lat/lons;
@@ -429,7 +459,12 @@ for year in [years[0]]:
     
     # getting to xarray/NetCDF to recognized spatial ref infor is not 
     #   immediately obvious. Crs needs setting as a coord, and then requires 
-    #   explicit linking to the PRISM dataset via the 'grid_mapping' attribute
+    #   explicit linking to the dataset via the 'grid_mapping' attribute
+    #   
+    #   if using something other than lon/lats, you often have to specific
+    #       a specific, NetCDF enabled/supported CRS. not found an exhaustive list
+    #       anywhere
+    #
     ''' NEED defined and worked on: 
         https://www.unidata.ucar.edu/software/thredds/v4.5/netcdf-java/reference/StandardCoordinateTransforms.html'''    
 
@@ -480,7 +515,9 @@ for year in [years[0]]:
 #    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['crs_wkt'] = crsOut.to_string()
 #    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['spatial_ref'] = crsOut.to_string()
 #    mod09a1.coords['AlbersAlaskaWGS84Projection'].attrs['GeoTransform'] = traOut
-    
+
+
+# more spatial ref needed to get the individual coords dealt with as well
     mod09a1['x'].attrs['standard_name'] = 'projection_x_coordinate'
 #    mod09a1['x'].attrs['grid_mapping'] = 'crs'
     mod09a1['x'].attrs['long_name']= 'x coordinate of projection'
@@ -499,6 +536,7 @@ for year in [years[0]]:
     mod09a1['time'].attrs['_CoordinateAxisType']='Time'
     #mod09a1.encoding['unlimited_dims']='time'
     
+    # attach the CRS attribute to the datasets as well
     mod09a1['surf_ref'].attrs['grid_mapping'] = 'crs'
     mod09a1['qc_500m'].attrs['grid_mapping'] = 'crs'
     mod09a1['view_geom'].attrs['grid_mapping'] = 'crs'
@@ -577,7 +615,11 @@ for year in [years[0]]:
 #                     encoding={'surf_ref':{'zlib': True, 'complevel': 9}})
 #
 
-
+########
+#
+# helper funtions 
+#
+########
 def extentCoords(lons, lats, xOff=0., yOff = 0., ptype='edge'):
     '''Function to calculate extent from lon & lat vectors. ptype used to 
     indicate if points are center of pixels, or upper left coners'''
@@ -597,285 +639,3 @@ def extentCoords(lons, lats, xOff=0., yOff = 0., ptype='edge'):
                    lons[-1] + xOff/2, lats[0] - yOff/2, ccw=False)
     return(bbox)
 
-    
-    b1Files = sorted(glob.glob(iDir+fPre+b1p+str(year)+fPst))
-    b2Files = sorted(glob.glob(iDir+fPre+b2p+str(year)+fPst))
-    b3Files = sorted(glob.glob(iDir+fPre+b3p+str(year)+fPst))
-    b4Files = sorted(glob.glob(iDir+fPre+b4p+str(year)+fPst))
-    b5Files = sorted(glob.glob(iDir+fPre+b5p+str(year)+fPst))
-    b6Files = sorted(glob.glob(iDir+fPre+b6p+str(year)+fPst))
-    b7Files = sorted(glob.glob(iDir+fPre+b7p+str(year)+fPst))
-    
-    # declare empty lists for testing times
-    b1l= []
-    b2l= []
-    b3l= []
-    b4l= []
-    b5l= []
-    b6l= []
-    b7l= []
- 
-     # declare 3D arrays
-    b1 = np.zeros([len(b1Files),r,c],dtype='int16')
-    b2 = np.zeros([len(b1Files),r,c],dtype='int16')
-    b3 = np.zeros([len(b1Files),r,c],dtype='int16')
-    b4 = np.zeros([len(b1Files),r,c],dtype='int16')
-    b5 = np.zeros([len(b1Files),r,c],dtype='int16')
-    b6 = np.zeros([len(b1Files),r,c],dtype='int16')
-    b7 = np.zeros([len(b1Files),r,c],dtype='int16')   
-    print(year)
-#    print(b1Files[0])
-#    [sTime, sClock] = time.time(),time.clock()
-    if len(b1Files) == len(b2Files) & len(b1Files) == len(b3Files) & \
-        len(b1Files) == len(b4Files) & len(b1Files) == len(b5Files) & \
-        len(b1Files) == len(b6Files) & len(b1Files) == len(b7Files):
-            
-            
-            print('in if loop, year is: ', year)  
-            # dminesion lenght of data cube
-            #d = len(b1Files)
-            #b1 = np.empty([d,r,c], dtype='int16')
-            [sTime, sClock] = time.time(),time.clock()
-            for i in range(0,len(b1Files)):
-                print('data cube create loop: ',i) 
-                # append band arrays
-                with rasterio.open(b1Files[i],nodatavals = mask_in) as src:
-                    tIn = src.read(1, masked = True)
-                    crsOut = src.crs
-                    traOut = src.transform
-                b1[i,:,:] = tIn.squeeze()
-                #b1.append(b1In)
-                
-                # b2
-                with rasterio.open(b2Files[i],nodatavals = mask_in) as src:
-                    tIn = src.read(1, masked = True)
-                b2[i,:,:] = tIn.squeeze()
-                #b2.append(b2In)
-                
-                # b3
-                with rasterio.open(b3Files[i],nodatavals = mask_in) as src:
-                    tIn = src.read()
-                b3[i,:,:] = tIn.squeeze()
-                #b3.append(b3In)
-                
-                # b4
-                with rasterio.open(b4Files[i],nodatavals = mask_in) as src:
-                    tIn = src.read()
-                b4[i,:,:] = tIn.squeeze()
-                #b4.append(b4In)
-                
-                
-                # b5
-                with rasterio.open(b5Files[i],nodatavals = mask_in) as src:
-                    tIn = src.read()
-                b5[i,:,:] = tIn.squeeze()
-                #b5.append(b5In)
-                
-                
-                # b6
-                with rasterio.open(b6Files[i],nodatavals = mask_in) as src:
-                    tIn = src.read()
-                b6[i,:,:] = tIn.squeeze()
-                #b6.append(b6In)
-                
-                # b7
-                with rasterio.open(b7Files[i],nodatavals = mask_in) as src:
-                    tIn = src.read()
-                b7[i,:,:] = tIn.squeeze()
-                #b7.append(b7In)
-            
-            # timing for numpy arrays
-            [eTime, eClock] = time.time(),time.clock()  
-#            print('System time for numpy version is: ',eTime-sTime)
-#            print('Clock time for numpy version is: ',eClock-sClock) 
-            
-  
-            #print('System time for append version is: ',eTime-sTime)
-            #print('Clock time for append version is: ',eClock-sClock)                             
-             
-                #if i == 0:
-                    
-                    #with rasterio.open(b1Files[i]) as src:
-                    #    b1In = src.read()
-                    #b1[i,:,:] = b1In
-                    #plt.imshow(b1.squeeze())
-                    #plt.show()
-                        
-                #else:
-                    #with rasterio.open(b1Files[i]) as src:
-                    #    b1In = src.read()
-                    
-                    #b1[i,:,:]
-                    #b1 = b1 + b1In 
-                    #plt.imshow(b1.squeeze())
-                    #plt.show()
-    else:
-        break
-         #sys.exit([10])              
- 
-    # generate median data
-    b1med = np.median(b1,axis=0)
-    b2med = np.median(b2,axis=0)
-    b3med = np.median(b3,axis=0)
-    b4med = np.median(b4,axis=0)
-    b5med = np.median(b5,axis=0)
-    b6med = np.median(b6,axis=0)
-    b7med = np.median(b7,axis=0)
-            
-    # generate yearly median TC images
-            
-    tcBright = b1med*ldBright[0] + b2med*ldBright[1] + b3med*ldBright[2] + \
-        b4med*ldBright[3] + b5med*ldBright[4] + b6med*ldBright[5] + \
-        b7med*ldBright[6]
-            
-    tcGreen = b1med*ldGreen[0] + b2med*ldGreen[1] + b3med*ldGreen[2] + \
-        b4med*ldGreen[3] + b5med*ldGreen[4] + b6med*ldGreen[5] + \
-        b7med*ldGreen[6]
-            
-    tcWet = b1med*ldWet[0] + b2med*ldWet[1] + b3med*ldWet[2] + \
-        b4med*ldWet[3] + b5med*ldWet[4] + b6med*ldWet[5] + \
-        b7med*ldWet[6]
-    
-    br_i = np.where(tcBright == -54743.4496)
-    tcBright[br_i] = mask_out
-    
-    gr_i = np.where(tcGreen == 25873.612799999995)
-    tcGreen[gr_i] = mask_out
-    
-    wt_i = np.where(tcWet == 22759.833599999998)
-    tcWet[wt_i] = mask_out
-        
-            # write files out
-            
-    with rasterio.open(oDir + str(year) + '_TCBright'+'.tif', 'w', driver='GTiff', height=tcBright.shape[0],
-                       width=tcBright.shape[1], count=1, dtype='float64',
-                       crs=crsOut, transform=traOut, nodata=mask_out) as dst:
-        dst.write(tcBright.squeeze(), 1)
-"""                
-    with rasterio.open(oDir + str(year) + '_TCGreen'+'.tif', 'w', driver='GTiff', height=tcGreen.shape[0],
-                       width=tcGreen.shape[1], count=1, dtype='float64',
-                       crs=crsOut, transform=traOut, nodata=mask_out) as dst:
-        dst.write(tcGreen.squeeze(), 1)
-                
-    with rasterio.open(oDir + str(year) + '_TCWet'+'.tif', 'w', driver='GTiff', height=tcWet.shape[0],
-                       width=tcWet.shape[1], count=1, dtype='float64',
-                       crs=crsOut, transform=traOut, nodata=mask_out) as dst:
-        dst.write(tcWet.squeeze(), 1)    
-#    [eTime, eClock] = time.time(),time.clock()  
-#    print('System time for cube create ',i,' is: ',eTime-sTime)
-#    print('Clock time for cube create ',i,' is: ',eClock-sClock) 
-    
-#    [sTime, sClock] = time.time(),time.clock()
-    
-#    for i in range(0,len(b1Files)):
-#        print('looping into append ',i) 
-#        with rasterio.open(b1Files[i]) as src:
-#            b1In = src.read()
-#            b1M[i,:,:] = b1In.squeeze()
-                #plt.imshow(b1.squeeze())
-                #plt.show()
-#    [eTime, eClock] = time.time(),time.clock()  
-#    print('System time for matix itteration',i,' is: ',eTime-sTime)
-#    print('Clock time for matrix itteration',i,' is: ',eClock-sClock)                   
-          
-#plt.imshow(b1.squeeze())
-#t = np.array(l)
-"""
-
-def extentCoords(lons, lats, xOff=0., yOff = 0., ptype='edge'):
-    '''Function to calculate extent from lon & lat vectors. ptype used to 
-    indicate if points are center of pixels, or upper left coners'''
-    from shapely.geometry import box
-    # minx = lons[0], miny=lats[-1], maxx=;ons[-1], maxy=lats[0] for clock-wise
-    #   bounding box
-    #mod this for centers/vs edges eventually?
-    if ((ptype == 'center') & (xOff == 0.)):
-        print('pixel type is center but offsets not provided')
-        return()
-    elif(ptype == 'edge'):
-        bbox = box(lons[0], lats[-1], lons[-1], lats[0], ccw=False)
-    elif (ptype == 'center'):
-        xOff = np.around(lons[1] - lons[0], decimals=14)
-        yOff = np.around(lats[1] - lats[0],decimals=14)        
-        bbox = box(lons[0] - xOff/2, lats[-1] + yOff/2, 
-                   lons[-1] + xOff/2, lats[0] - yOff/2, ccw=False)
-    return(bbox)
- 
-
-#[sTime, sClock] = time.time(),time.clock() 
-#b1med = np.median(b1,axis=0)
-#[eTime, eClock] = time.time(),time.clock()
-#print('System time for median on list is: ',eTime-sTime)
-#print('Clock time for median on list is: ',eClock-sClock)
-#[sTime, sClock] = time.time(),time.clock() 
-#b1Mmed = np.median(b1M,axis=0)
-#[eTime, eClock] = time.time(),time.clock()
-#print('System time for median on matrix is: ',eTime-sTime)
-#print('Clock time for median on matrix is: ',eClock-sClock)
-
-#[sTime, sClock] = time.time(),time.clock()              
-#b1med = np.median(b1,axis=0)
-#b2med = np.median(b2,axis=0)
-#b3med = np.median(b3,axis=0)
-#b4med = np.median(b4,axis=0)
-#b5med = np.median(b5,axis=0)
-#b6med = np.median(b6,axis=0)
-#b7med = np.median(b7,axis=0)
-#[eTime, eClock] = time.time(),time.clock() 
-#print('System time for median on numpy array is: ',eTime-sTime)
-#print('Clock time for median on numpy array is: ',eClock-sClock)
-
-#[sTime, sClock] = time.time(),time.clock()              
-#b1lmed = np.median(b1l,axis=0)
-#b2lmed = np.median(b2l,axis=0)
-#b3lmed = np.median(b3l,axis=0)
-#b4lmed = np.median(b4l,axis=0)
-#b5lmed = np.median(b5l,axis=0)
-#b6lmed = np.median(b6l,axis=0)
-#b7lmed = np.median(b7l,axis=0)
-#[eTime, eClock] = time.time(),time.clock() 
-#print('System time for median on list is: ',eTime-sTime)
-#print('Clock time for median on list is: ',eClock-sClock)
-
-#plt.imshow(b1med.squeeze())
-
-#tcBright = b1med*ldBright[0] + b2med*ldBright[1] + b3med*ldBright[2] + \
-#    b4med*ldBright[3] + b5med*ldBright[4] + b6med*ldBright[5] + \
-#    b7med*ldBright[6]
-#tcGreen = b1med*ldGreen[0] + b2med*ldGreen[1] + b3med*ldGreen[2] + \
-#    b4med*ldGreen[3] + b5med*ldGreen[4] + b6med*ldGreen[5] + \
-#    b7med*ldGreen[6]
-#tcWet = b1med*ldWet[0] + b2med*ldWet[1] + b3med*ldWet[2] + \
-#    b4med*ldWet[3] + b5med*ldWet[4] + b6med*ldWet[5] + \
-#    b7med*ldWet[6]
-    
-    
-#plt.imshow(tcBright.squeeze())   
-#test file listings 
-#for file in os.listdir(iDir):
-#    if fnmatch.fnmatch(file, fPre+b1p+fPst):
-#        print (file)
-#        files = file
-
-#   for year in years:
-    
-#files = glob.glob(iDir+fPre+b1p+fPst)
-#print(files[0])
-#with rasterio.open(files[0]) as src:
-#    b1 = src.read()
-
-#with rasterio.open(oDir + 'TCBright'+'.tif', 'w', driver='GTiff', height=tcBright.shape[1],
-#                   width=tcBright.shape[2], count=1, dtype='float64',
-#                   crs=crsOut, transform=traOut) as dst:
-#    dst.write(tcBright.squeeze(), 1)
-
-#with rasterio.open(oDir + 'TCBright'+'.tif', 'w', driver='GTiff', height=tcBright.shape[1],
-#                   width=tcBright.shape[2], count=1, dtype=tcBright.astype('float64').dtype,
-#                   crs=crsOut, transform=traOut) as dst:
-#    dst.write(tcBright.squeeze(), 1)
-
-
-#plt.imshow(b1.squeeze())
-
-
-#print(files)
